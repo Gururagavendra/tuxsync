@@ -6,7 +6,7 @@
 
 - **Multi-Distro Support**: Works on Ubuntu/Debian (apt), Fedora (dnf), and Arch (pacman)
 - **Privacy First**: Choose between GitHub Gists (convenient) or your own custom server (private)
-- **Loose Coupling**: Uses [TuxMate](https://github.com/Gururagavendra/tuxmate) as an external executor - no embedded code
+- **Loose Coupling**: Uses [tuxmate-cli](https://github.com/Gururagavendra/tuxmate-cli) as an external executor - no embedded code
 - **Smart Scanning**: Only backs up user-installed packages, filters out libraries
 - **Magic Restore**: One-liner command to restore your setup on any Linux machine
 
@@ -70,6 +70,7 @@ uv run tuxsync list
 - **Python 3.10+**
 - **GitHub CLI (gh)** - For GitHub Gist storage: https://cli.github.com/
 - **gum** (optional) - For pretty terminal menus: https://github.com/charmbracelet/gum
+- **tuxmate-cli** - For cross-distro package installation: https://github.com/Gururagavendra/tuxmate-cli
 
 The wrapper script (\`tuxsync.sh\`) will help install these if missing.
 
@@ -86,14 +87,14 @@ TuxSync follows a **loose coupling** principle:
 │  └────┬─────┘  └────┬─────┘  └────┬─────┘              │
 │       │             │             │                      │
 │       ▼             ▼             ▼                      │
-│  [apt/dnf/     [GitHub/      [TuxMate]                  │
+│  [apt/dnf/     [GitHub/      [tuxmate-cli]               │
 │   pacman]      Custom]        Executor                   │
 └─────────────────────────────────────────────────────────┘
 \`\`\`
 
 - **TuxSync** = The Brain (orchestrates everything)
-- **TuxMate** = The Hands (does the actual package installation)
-- If TuxMate isn't installed, TuxSync downloads it temporarily to \`/tmp\`
+- **tuxmate-cli** = The Hands (does the actual package installation)
+- If tuxmate-cli isn't installed, TuxSync will fail gracefully with installation instructions
 
 ## Configuration
 
@@ -163,4 +164,4 @@ MIT License - See [LICENSE](LICENSE) for details.
 
 ## Related Projects
 
-- [TuxMate](https://github.com/Gururagavendra/tuxmate) - Cross-distro package installer (used as executor)
+- [tuxmate-cli](https://github.com/Gururagavendra/tuxmate-cli) - Cross-distro package installer CLI (used as executor)
