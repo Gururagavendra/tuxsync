@@ -3,24 +3,25 @@ Restore module for TuxSync.
 Handles restoring packages and configurations using tuxmate-cli as executor.
 """
 
-import subprocess
 import shutil
 import stat
-import os
+import subprocess
 from pathlib import Path
 from typing import Optional
 
 from rich.console import Console
 from rich.progress import Progress, SpinnerColumn, TextColumn
 
-from .storage import BackupMetadata, get_storage_backend
+from .storage import get_storage_backend
 
 console = Console()
 
 # TuxMate CLI repository for downloading
 TUXMATE_CLI_REPO = "https://github.com/Gururagavendra/tuxmate-cli"
 TUXMATE_CLI_SCRIPT_URL = f"{TUXMATE_CLI_REPO}/releases/latest/download/tuxmate-cli.sh"
-TUXMATE_CLI_FALLBACK_URL = f"https://raw.githubusercontent.com/Gururagavendra/tuxmate-cli/main/tuxmate-cli.sh"
+TUXMATE_CLI_FALLBACK_URL = (
+    "https://raw.githubusercontent.com/Gururagavendra/tuxmate-cli/main/tuxmate-cli.sh"
+)
 
 
 class TuxMateExecutor:
@@ -82,8 +83,15 @@ class TuxMateExecutor:
 
                 if result.returncode == 0 and tmp_path.exists():
                     # Make executable
-                    tmp_path.chmod(tmp_path.stat().st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
-                    console.print(f"[green]✓ TuxMate CLI downloaded to {tmp_path}[/green]")
+                    tmp_path.chmod(
+                        tmp_path.stat().st_mode
+                        | stat.S_IXUSR
+                        | stat.S_IXGRP
+                        | stat.S_IXOTH
+                    )
+                    console.print(
+                        f"[green]✓ TuxMate CLI downloaded to {tmp_path}[/green]"
+                    )
                     return str(tmp_path)
 
             except subprocess.SubprocessError:
@@ -96,14 +104,17 @@ class TuxMateExecutor:
                 capture_output=True,
             )
             if result.returncode == 0 and tmp_path.exists():
-                tmp_path.chmod(tmp_path.stat().st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
+                tmp_path.chmod(
+                    tmp_path.stat().st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH
+                )
                 return str(tmp_path)
         except subprocess.SubprocessError:
             pass
 
         raise RuntimeError(
             "Failed to download TuxMate CLI. Please install it manually:\n"
-            f"  curl -fsSL {TUXMATE_CLI_FALLBACK_URL} -o /usr/local/bin/tuxmate-cli.sh\n"
+            f"  curl -fsSL {TUXMATE_CLI_FALLBACK_URL} "
+            "-o /usr/local/bin/tuxmate-cli.sh\n"
             "  chmod +x /usr/local/bin/tuxmate-cli.sh"
         )
 
@@ -138,11 +149,11 @@ class TuxMateExecutor:
     def install_packages(self, packages: list[str], dry_run: bool = False) -> bool:
         """
         Install packages using tuxmate-cli.
-        
+
         Args:
             packages: List of package names to install.
             dry_run: If True, only show what would be installed.
-            
+
         Returns:
             True if installation succeeded.
         """
@@ -151,8 +162,10 @@ class TuxMateExecutor:
             return True
 
         tuxmate_cli = self.get_tuxmate_cli()
-        
-        console.print(f"\n[blue]Installing {len(packages)} packages via TuxMate CLI...[/blue]")
+
+        console.print(
+            f"\n[blue]Installing {len(packages)} packages via TuxMate CLI...[/blue]"
+        )
 
         if dry_run:
             console.print("[yellow]DRY RUN - Would install:[/yellow]")
@@ -165,32 +178,40 @@ class TuxMateExecutor:
             # Install packages in batches to avoid command line length limits
             batch_size = 20  # Smaller batches for better error handling
             all_success = True
-            
+
             for i in range(0, len(packages), batch_size):
-                batch = packages[i:i + batch_size]
-                console.print(f"[dim]Installing batch {i//batch_size + 1}: {len(batch)} packages[/dim]")
-                
+                batch = packages[i : i + batch_size]
+                console.print(
+                    f"[dim]Installing batch {i // batch_size + 1}: "
+                    f"{len(batch)} packages[/dim]"
+                )
+
                 cmd = [tuxmate_cli, "install"] + batch
                 if tuxmate_cli.endswith(".sh"):
                     # If using the script, add --yes to skip prompts
                     cmd.append("--yes")
-                
+
                 result = subprocess.run(
                     cmd,
                     capture_output=False,  # Let output show to user
                     text=True,
                 )
-                
+
                 if result.returncode != 0:
-                    console.print(f"[red]✗ Batch {i//batch_size + 1} failed with exit code {result.returncode}[/red]")
+                    console.print(
+                        f"[red]✗ Batch {i // batch_size + 1} failed with "
+                        f"exit code {result.returncode}[/red]"
+                    )
                     all_success = False
                     # Continue with other batches instead of failing completely
-            
+
             if all_success:
                 console.print("[green]✓ All packages installed successfully[/green]")
             else:
-                console.print("[yellow]⚠ Some packages may have failed to install[/yellow]")
-            
+                console.print(
+                    "[yellow]⚠ Some packages may have failed to install[/yellow]"
+                )
+
             return all_success
 
         except subprocess.SubprocessError as e:
@@ -215,32 +236,35 @@ class RestoreManager:
     ) -> bool:
         """
         Restore .bashrc content.
-        
+
         Args:
             content: The bashrc content to restore.
             backup_existing: Whether to backup existing .bashrc.
             merge: Whether to merge with existing (append) instead of replace.
-            
+
         Returns:
             True if restoration succeeded.
         """
         bashrc_path = Path.home() / ".bashrc"
-        
+
         if bashrc_path.exists():
             if backup_existing:
                 # Create backup with timestamp
                 import datetime
+
                 timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
                 backup_path = bashrc_path.with_suffix(f".backup_{timestamp}")
-                
-                console.print(f"[blue]Backing up existing .bashrc to {backup_path}[/blue]")
+
+                console.print(
+                    f"[blue]Backing up existing .bashrc to {backup_path}[/blue]"
+                )
                 shutil.copy2(bashrc_path, backup_path)
-            
+
             if merge:
                 # Append to existing
                 console.print("[blue]Merging .bashrc content...[/blue]")
                 existing = bashrc_path.read_text()
-                
+
                 # Add separator and append
                 separator = "\n\n# === TuxSync Restored Content ===\n"
                 new_content = existing + separator + content
@@ -267,7 +291,7 @@ class RestoreManager:
     ) -> bool:
         """
         Perform full restore from a backup.
-        
+
         Args:
             backup_id: ID of the backup to restore.
             storage_type: "github" or "custom".
@@ -276,11 +300,11 @@ class RestoreManager:
             skip_packages: Don't install packages.
             skip_bashrc: Don't restore bashrc.
             merge_bashrc: Merge instead of replace bashrc.
-            
+
         Returns:
             True if restore succeeded.
         """
-        console.print(f"\n[bold blue]═══ TuxSync Restore ═══[/bold blue]\n")
+        console.print("\n[bold blue]═══ TuxSync Restore ═══[/bold blue]\n")
 
         try:
             # Get storage backend
@@ -291,7 +315,7 @@ class RestoreManager:
             metadata, bashrc_content = storage.load(backup_id)
 
             # Show backup info
-            console.print(f"\n[bold]Backup Information:[/bold]")
+            console.print("\n[bold]Backup Information:[/bold]")
             console.print(f"  Created: {metadata.created_at}")
             console.print(f"  Source: {metadata.distro} {metadata.distro_version}")
             console.print(f"  Package Manager: {metadata.package_manager}")
@@ -303,9 +327,13 @@ class RestoreManager:
 
             # Restore packages
             if not skip_packages and metadata.packages:
-                console.print(f"[bold]Restoring {len(metadata.packages)} packages...[/bold]")
+                console.print(
+                    f"[bold]Restoring {len(metadata.packages)} packages...[/bold]"
+                )
                 if not self.executor.install_packages(metadata.packages, dry_run):
-                    console.print("[yellow]⚠ Some packages may have failed to install[/yellow]")
+                    console.print(
+                        "[yellow]⚠ Some packages may have failed to install[/yellow]"
+                    )
                     success = False
 
             # Restore bashrc
@@ -316,9 +344,13 @@ class RestoreManager:
                     self.restore_bashrc(bashrc_content, merge=merge_bashrc)
 
             if success:
-                console.print("\n[bold green]✓ Restore completed successfully![/bold green]")
+                console.print(
+                    "\n[bold green]✓ Restore completed successfully![/bold green]"
+                )
             else:
-                console.print("\n[bold yellow]⚠ Restore completed with warnings[/bold yellow]")
+                console.print(
+                    "\n[bold yellow]⚠ Restore completed with warnings[/bold yellow]"
+                )
 
             return success
 

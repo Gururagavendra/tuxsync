@@ -3,19 +3,18 @@ Storage module for TuxSync.
 Handles backup storage to GitHub Gists or custom servers.
 """
 
-import json
-import subprocess
 import datetime
+import subprocess
 from abc import ABC, abstractmethod
-from dataclasses import dataclass, asdict
-from typing import Optional
+from dataclasses import asdict, dataclass
 from pathlib import Path
+from typing import Optional
 
-import yaml
 import requests
+import yaml
 from rich.console import Console
 
-from .scanner import ScanResult, PackageManager
+from .scanner import ScanResult
 
 console = Console()
 
@@ -23,6 +22,7 @@ console = Console()
 @dataclass
 class BackupMetadata:
     """Metadata for a TuxSync backup."""
+
     version: str
     created_at: str
     distro: str
@@ -33,7 +33,9 @@ class BackupMetadata:
     has_bashrc: bool
 
     @classmethod
-    def from_scan_result(cls, scan: ScanResult, version: str = "1.0") -> "BackupMetadata":
+    def from_scan_result(
+        cls, scan: ScanResult, version: str = "1.0"
+    ) -> "BackupMetadata":
         """Create metadata from a scan result."""
         return cls(
             version=version,
@@ -60,6 +62,7 @@ class BackupMetadata:
 @dataclass
 class BackupResult:
     """Result of a backup operation."""
+
     success: bool
     backup_id: str
     storage_type: str
@@ -79,7 +82,7 @@ class StorageBackend(ABC):
     def load(self, backup_id: str) -> tuple[BackupMetadata, Optional[str]]:
         """
         Load backup from storage.
-        
+
         Returns:
             Tuple of (metadata, bashrc_content).
         """
@@ -154,6 +157,7 @@ class GitHubStorage(StorageBackend):
 
         # Create temporary files for gist
         import tempfile
+
         with tempfile.TemporaryDirectory() as tmpdir:
             tmpdir_path = Path(tmpdir)
 
@@ -172,11 +176,17 @@ class GitHubStorage(StorageBackend):
 
             # Create secret gist
             try:
-                description = f"TuxSync backup - {scan.distro} {scan.distro_version} - {datetime.datetime.now().strftime('%Y-%m-%d %H:%M')}"
-                
+                description = (
+                    f"TuxSync backup - {scan.distro} {scan.distro_version} - "
+                    f"{datetime.datetime.now().strftime('%Y-%m-%d %H:%M')}"
+                )
+
                 cmd = [
-                    "gh", "gist", "create",
-                    "--desc", description,
+                    "gh",
+                    "gist",
+                    "create",
+                    "--desc",
+                    description,
                     "--public=false",  # Secret gist
                 ] + files
 
@@ -191,9 +201,12 @@ class GitHubStorage(StorageBackend):
                 gist_url = result.stdout.strip()
                 gist_id = gist_url.split("/")[-1]
 
-                restore_cmd = f"curl -sL https://raw.githubusercontent.com/Gururagavendra/tuxsync/main/restore.sh | bash -s -- {gist_id}"
+                restore_cmd = (
+                    f"curl -sL https://raw.githubusercontent.com/"
+                    f"Gururagavendra/tuxsync/main/restore.sh | bash -s -- {gist_id}"
+                )
 
-                console.print(f"[green]✓ Backup created successfully![/green]")
+                console.print("[green]✓ Backup created successfully![/green]")
                 console.print(f"  Gist URL: {gist_url}")
 
                 return BackupResult(
@@ -253,7 +266,7 @@ class CustomServerStorage(StorageBackend):
     def __init__(self, server_url: str):
         """
         Initialize custom server storage.
-        
+
         Args:
             server_url: Base URL of the storage server.
         """
@@ -304,7 +317,9 @@ class CustomServerStorage(StorageBackend):
 
     def load(self, backup_id: str) -> tuple[BackupMetadata, Optional[str]]:
         """Load backup from custom server."""
-        console.print(f"[blue]Fetching backup {backup_id} from {self.server_url}...[/blue]")
+        console.print(
+            f"[blue]Fetching backup {backup_id} from {self.server_url}...[/blue]"
+        )
 
         try:
             response = requests.get(
@@ -329,11 +344,11 @@ def get_storage_backend(
 ) -> StorageBackend:
     """
     Get appropriate storage backend.
-    
+
     Args:
         storage_type: Either "github" or "custom".
         server_url: URL for custom server (required if storage_type is "custom").
-        
+
     Returns:
         Storage backend instance.
     """

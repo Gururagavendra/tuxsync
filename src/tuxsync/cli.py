@@ -11,9 +11,9 @@ from rich.console import Console
 from rich.panel import Panel
 
 from . import __version__
-from .scanner import PackageScanner
-from .storage import get_storage_backend, BackupResult
 from .restore import RestoreManager
+from .scanner import PackageScanner
+from .storage import BackupResult, get_storage_backend
 from .utils import gum_choose, gum_confirm, gum_input
 
 console = Console()
@@ -35,10 +35,14 @@ def print_restore_command(result: BackupResult):
     console.print("\n[bold green]═══ Backup Complete! ═══[/bold green]\n")
     console.print("[bold]Your Magic Restore Command:[/bold]")
     console.print()
-    console.print(Panel(result.restore_command, title="Copy this command", style="cyan"))
+    console.print(
+        Panel(result.restore_command, title="Copy this command", style="cyan")
+    )
     console.print()
     console.print(f"[dim]Backup ID: {result.backup_id}[/dim]")
-    console.print("[dim]Run this command on any Linux machine to restore your setup![/dim]")
+    console.print(
+        "[dim]Run this command on any Linux machine to restore your setup![/dim]"
+    )
 
 
 @click.group()
@@ -46,7 +50,7 @@ def print_restore_command(result: BackupResult):
 def cli():
     """
     TuxSync - Profile Sync for Linux Users
-    
+
     Backup and restore your packages and configurations across machines.
     """
     pass
@@ -85,7 +89,7 @@ def backup(
 ):
     """
     Create a backup of installed packages and configurations.
-    
+
     Scans your system for user-installed packages and optionally
     backs up your ~/.bashrc file.
     """
@@ -103,7 +107,7 @@ def backup(
             sys.exit(1)
 
     # Show summary
-    console.print(f"\n[bold]Scan Summary:[/bold]")
+    console.print("\n[bold]Scan Summary:[/bold]")
     console.print(f"  Distro: {scan_result.distro} {scan_result.distro_version}")
     console.print(f"  Packages: {len(scan_result.packages)}")
     console.print(f"  Bashrc: {'✓' if scan_result.bashrc_content else '✗'}")
@@ -112,9 +116,12 @@ def backup(
     # Phase 2: Storage selection
     if not storage_type and not server_url:
         if non_interactive:
-            console.print("[red]Error: --github or --server required in non-interactive mode[/red]")
+            console.print(
+                "[red]Error: --github or --server required "
+                "in non-interactive mode[/red]"
+            )
             sys.exit(1)
-        
+
         choice = gum_choose(
             "Where would you like to store your backup?",
             ["GitHub Gist (recommended)", "Custom Server"],
@@ -191,7 +198,8 @@ def backup(
     help="Merge .bashrc instead of replacing",
 )
 @click.option(
-    "--yes", "-y",
+    "--yes",
+    "-y",
     is_flag=True,
     default=False,
     help="Skip confirmation prompts",
@@ -207,7 +215,7 @@ def restore(
 ):
     """
     Restore packages and configurations from a backup.
-    
+
     BACKUP_ID is the Gist ID or backup identifier from your backup command.
     """
     print_banner()
@@ -217,7 +225,9 @@ def restore(
 
     # Confirmation (unless --yes or --dry-run)
     if not yes and not dry_run:
-        console.print(f"[yellow]This will restore packages from backup: {backup_id}[/yellow]")
+        console.print(
+            f"[yellow]This will restore packages from backup: {backup_id}[/yellow]"
+        )
         if not gum_confirm("Continue with restore?", default=True):
             console.print("[red]Restore cancelled[/red]")
             sys.exit(1)
@@ -247,11 +257,11 @@ def restore(
 def list(server_url: Optional[str]):
     """
     List available backups.
-    
+
     Shows your backups stored on GitHub Gists or custom server.
     """
     print_banner()
-    
+
     if server_url:
         console.print("[yellow]Custom server listing not yet implemented[/yellow]")
         return
@@ -260,6 +270,7 @@ def list(server_url: Optional[str]):
     console.print("[blue]Fetching your TuxSync backups from GitHub...[/blue]\n")
 
     import subprocess
+
     try:
         result = subprocess.run(
             ["gh", "gist", "list", "--limit", "20"],

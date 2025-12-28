@@ -3,8 +3,8 @@ Utilities for TuxSync.
 Helper functions for gum integration and shell operations.
 """
 
-import subprocess
 import shutil
+import subprocess
 from typing import Optional
 
 
@@ -16,13 +16,13 @@ def gum_available() -> bool:
 def gum_confirm(prompt: str, default: bool = False) -> bool:
     """
     Show a confirmation prompt using gum.
-    
+
     Falls back to basic input if gum is not available.
-    
+
     Args:
         prompt: The confirmation message.
         default: Default value if gum is not available.
-        
+
     Returns:
         True if user confirmed.
     """
@@ -44,14 +44,14 @@ def gum_choose(
 ) -> Optional[str]:
     """
     Show a selection menu using gum.
-    
+
     Falls back to numbered selection if gum is not available.
-    
+
     Args:
         prompt: The prompt message.
         choices: List of choices.
         default: Default selection.
-        
+
     Returns:
         Selected choice or None if cancelled.
     """
@@ -76,7 +76,7 @@ def gum_choose(
         print(f"\n{prompt}")
         for i, choice in enumerate(choices, 1):
             print(f"  {i}. {choice}")
-        
+
         try:
             selection = input("\nEnter number: ").strip()
             idx = int(selection) - 1
@@ -84,7 +84,7 @@ def gum_choose(
                 return choices[idx]
         except (ValueError, IndexError):
             pass
-        
+
         return default
 
 
@@ -95,14 +95,14 @@ def gum_input(
 ) -> str:
     """
     Get text input using gum.
-    
+
     Falls back to basic input if gum is not available.
-    
+
     Args:
         prompt: The prompt message.
         placeholder: Placeholder text.
         default: Default value.
-        
+
     Returns:
         User input string.
     """
@@ -126,7 +126,7 @@ def gum_input(
         if default:
             prompt_text += f" [{default}]"
         prompt_text += ": "
-        
+
         response = input(prompt_text).strip()
         return response if response else default
 
@@ -134,24 +134,27 @@ def gum_input(
 def gum_spin(command: list[str], title: str) -> bool:
     """
     Run a command with a spinner using gum.
-    
+
     Falls back to running command directly if gum is not available.
-    
+
     Args:
         command: Command to run.
         title: Spinner title.
-        
+
     Returns:
         True if command succeeded.
     """
     if gum_available():
         full_cmd = [
-            "gum", "spin",
-            "--spinner", "dot",
-            "--title", title,
+            "gum",
+            "spin",
+            "--spinner",
+            "dot",
+            "--title",
+            title,
             "--",
         ] + command
-        
+
         result = subprocess.run(full_cmd)
         return result.returncode == 0
     else:

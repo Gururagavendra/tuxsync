@@ -3,11 +3,11 @@ Scanner module for TuxSync.
 Detects package manager and scans for user-installed packages.
 """
 
-import subprocess
 import shutil
-from pathlib import Path
+import subprocess
 from dataclasses import dataclass, field
 from enum import Enum
+from pathlib import Path
 from typing import Optional
 
 from rich.console import Console
@@ -17,6 +17,7 @@ console = Console()
 
 class PackageManager(Enum):
     """Supported package managers."""
+
     APT = "apt"
     DNF = "dnf"
     PACMAN = "pacman"
@@ -26,6 +27,7 @@ class PackageManager(Enum):
 @dataclass
 class ScanResult:
     """Result of a system scan."""
+
     distro: str
     distro_version: str
     package_manager: PackageManager
@@ -39,14 +41,22 @@ class PackageScanner:
 
     # Common library prefixes to filter out
     LIB_PREFIXES = (
-        "lib", "python3-", "python-", "fonts-", "gir1.2-",
-        "libglib", "libgtk", "libx", "libc6", "libstdc++",
+        "lib",
+        "python3-",
+        "python-",
+        "fonts-",
+        "gir1.2-",
+        "libglib",
+        "libgtk",
+        "libx",
+        "libc6",
+        "libstdc++",
     )
 
     def __init__(self, include_bashrc: bool = True):
         """
         Initialize the scanner.
-        
+
         Args:
             include_bashrc: Whether to include ~/.bashrc content in scan.
         """
@@ -75,7 +85,7 @@ class PackageScanner:
     def get_distro_info(self) -> tuple[str, str]:
         """
         Get distribution name and version.
-        
+
         Returns:
             Tuple of (distro_name, distro_version).
         """
@@ -109,8 +119,7 @@ class PackageScanner:
 
             # Filter out libraries and common base packages
             packages = [
-                pkg for pkg in all_packages
-                if pkg and not self._is_library_package(pkg)
+                pkg for pkg in all_packages if pkg and not self._is_library_package(pkg)
             ]
         except subprocess.CalledProcessError as e:
             console.print(f"[red]Error getting apt packages: {e}[/red]")
@@ -133,8 +142,7 @@ class PackageScanner:
             all_packages = result.stdout.strip().split("\n")
 
             packages = [
-                pkg for pkg in all_packages
-                if pkg and not self._is_library_package(pkg)
+                pkg for pkg in all_packages if pkg and not self._is_library_package(pkg)
             ]
         except subprocess.CalledProcessError as e:
             console.print(f"[red]Error getting dnf packages: {e}[/red]")
@@ -157,8 +165,7 @@ class PackageScanner:
             all_packages = result.stdout.strip().split("\n")
 
             packages = [
-                pkg for pkg in all_packages
-                if pkg and not self._is_library_package(pkg)
+                pkg for pkg in all_packages if pkg and not self._is_library_package(pkg)
             ]
         except subprocess.CalledProcessError as e:
             console.print(f"[red]Error getting pacman packages: {e}[/red]")
@@ -170,10 +177,10 @@ class PackageScanner:
     def _is_library_package(self, package_name: str) -> bool:
         """
         Check if a package is likely a library.
-        
+
         Args:
             package_name: Name of the package.
-            
+
         Returns:
             True if the package appears to be a library.
         """
@@ -183,7 +190,7 @@ class PackageScanner:
     def get_packages(self) -> list[str]:
         """
         Get list of user-installed packages.
-        
+
         Returns:
             List of package names.
         """
@@ -205,40 +212,40 @@ class PackageScanner:
     def get_bashrc_content(self) -> Optional[str]:
         """
         Read ~/.bashrc content.
-        
+
         Returns:
             Content of ~/.bashrc or None if not found.
         """
         bashrc_path = Path.home() / ".bashrc"
-        
+
         if bashrc_path.exists():
             try:
                 return bashrc_path.read_text()
             except PermissionError:
                 console.print("[yellow]Warning: Cannot read ~/.bashrc[/yellow]")
                 return None
-        
+
         return None
 
     def scan(self) -> ScanResult:
         """
         Perform a full system scan.
-        
+
         Returns:
             ScanResult with all collected information.
         """
         console.print("[blue]Scanning system...[/blue]")
-        
+
         distro, version = self.get_distro_info()
         pm = self.detect_package_manager()
-        
+
         console.print(f"  Detected: [green]{distro} {version}[/green]")
         console.print(f"  Package Manager: [green]{pm.value}[/green]")
-        
+
         console.print("  Scanning packages...")
         packages = self.get_packages()
         console.print(f"  Found [green]{len(packages)}[/green] user-installed packages")
-        
+
         bashrc_content = None
         if self.include_bashrc:
             console.print("  Reading ~/.bashrc...")
@@ -247,7 +254,7 @@ class PackageScanner:
                 console.print("  [green]✓[/green] ~/.bashrc captured")
             else:
                 console.print("  [yellow]⚠[/yellow] ~/.bashrc not found or empty")
-        
+
         return ScanResult(
             distro=distro,
             distro_version=version,

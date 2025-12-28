@@ -31,15 +31,15 @@ print_banner() {
 # Check for required tools
 check_deps() {
     local missing=()
-    
+
     if ! command -v curl &> /dev/null && ! command -v wget &> /dev/null; then
         missing+=("curl or wget")
     fi
-    
+
     if ! command -v gh &> /dev/null; then
         missing+=("gh (GitHub CLI)")
     fi
-    
+
     if [ ${#missing[@]} -gt 0 ]; then
         log_error "Missing required tools: ${missing[*]}"
         log_info "Please install them and try again."
@@ -65,14 +65,14 @@ install_packages() {
     local pm="$1"
     shift
     local packages=("$@")
-    
+
     if [ ${#packages[@]} -eq 0 ]; then
         log_warn "No packages to install"
         return 0
     fi
-    
+
     log_info "Installing ${#packages[@]} packages using $pm..."
-    
+
     case "$pm" in
         apt)
             sudo apt update
@@ -94,44 +94,44 @@ install_packages() {
 # Main restore function
 restore() {
     local gist_id="$1"
-    
+
     if [ -z "$gist_id" ]; then
         log_error "Usage: restore.sh <GIST_ID>"
         echo "Example: curl -sL .../restore.sh | bash -s -- abc123def456"
         exit 1
     fi
-    
+
     print_banner
     log_info "Restoring from backup: $gist_id"
-    
+
     # Check dependencies
     check_deps
-    
+
     # Create temp directory
     TMP_DIR=$(mktemp -d)
     trap "rm -rf $TMP_DIR" EXIT
-    
+
     # Fetch tuxsync.yaml from gist
     log_info "Fetching backup metadata..."
     if ! gh gist view "$gist_id" --raw -f tuxsync.yaml > "$TMP_DIR/tuxsync.yaml" 2>/dev/null; then
         log_error "Failed to fetch backup. Check the Gist ID and ensure you're logged in (gh auth login)"
         exit 1
     fi
-    
+
     # Parse YAML (basic parsing without dependencies)
     log_info "Parsing backup..."
-    
+
     # Extract distro info
     source_distro=$(grep "^distro:" "$TMP_DIR/tuxsync.yaml" | cut -d: -f2 | xargs)
     source_version=$(grep "^distro_version:" "$TMP_DIR/tuxsync.yaml" | cut -d: -f2 | xargs)
     source_pm=$(grep "^package_manager:" "$TMP_DIR/tuxsync.yaml" | cut -d: -f2 | xargs)
-    
+
     log_info "Source system: $source_distro $source_version ($source_pm)"
-    
+
     # Detect current system
     current_pm=$(detect_pm)
     log_info "Current system package manager: $current_pm"
-    
+
     # Warning if package managers differ
     if [ "$source_pm" != "$current_pm" ]; then
         log_warn "Package manager mismatch! Source: $source_pm, Current: $current_pm"
@@ -143,7 +143,7 @@ restore() {
             exit 0
         fi
     fi
-    
+
     # Extract packages (between 'packages:' and next key)
     log_info "Extracting package list..."
     packages=()
@@ -163,9 +163,9 @@ restore() {
             fi
         fi
     done < "$TMP_DIR/tuxsync.yaml"
-    
+
     log_info "Found ${#packages[@]} packages to install"
-    
+
     # Show package list
     echo ""
     echo "Packages to install:"
@@ -176,7 +176,7 @@ restore() {
         echo "  ... and $((${#packages[@]} - 20)) more"
     fi
     echo ""
-    
+
     # Confirm
     echo -n "Proceed with installation? [y/N] "
     read -r response
@@ -184,10 +184,10 @@ restore() {
         log_info "Restore cancelled"
         exit 0
     fi
-    
+
     # Install packages
     install_packages "$current_pm" "${packages[@]}"
-    
+
     # Restore bashrc if present
     has_bashrc=$(grep "^has_bashrc:" "$TMP_DIR/tuxsync.yaml" | cut -d: -f2 | xargs)
     if [ "$has_bashrc" = "true" ]; then
@@ -205,7 +205,7 @@ restore() {
             fi
         fi
     fi
-    
+
     echo ""
     log_info "═══ Restore Complete! ═══"
     log_info "You may need to:"

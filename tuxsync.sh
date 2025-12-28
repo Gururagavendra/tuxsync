@@ -60,7 +60,7 @@ install_package() {
     local pkg_name="$1"
     local pkg_manager
     pkg_manager=$(detect_package_manager)
-    
+
     case "$pkg_manager" in
         apt)
             sudo apt update && sudo apt install -y "$pkg_name"
@@ -82,7 +82,7 @@ install_package() {
 install_gum() {
     local pkg_manager
     pkg_manager=$(detect_package_manager)
-    
+
     case "$pkg_manager" in
         apt)
             # Install gum from Charm's repository for Debian/Ubuntu
@@ -136,28 +136,28 @@ install_tuxmate_cli() {
 # Check and install dependencies
 check_dependencies() {
     local missing_deps=()
-    
+
     # Check Python 3
     if ! command_exists python3; then
         missing_deps+=("python3")
     fi
-    
+
     # Check gum
     if ! command_exists gum; then
         missing_deps+=("gum")
     fi
-    
+
     # Check tuxmate-cli
     if ! command_exists tuxmate-cli; then
         missing_deps+=("tuxmate-cli")
     fi
-    
+
     if [ ${#missing_deps[@]} -eq 0 ]; then
         return 0
     fi
-    
+
     log_warn "The following dependencies are missing: ${missing_deps[*]}"
-    
+
     # If gum is available, use it for interactive prompt
     if command_exists gum; then
         if gum confirm "Would you like to install them now?"; then
@@ -197,7 +197,7 @@ install_missing_deps() {
                 install_tuxmate_cli
                 ;;
         esac
-        
+
         if [ $? -eq 0 ]; then
             log_info "$dep installed successfully!"
         else
@@ -235,7 +235,7 @@ show_help() {
 main() {
     # Check dependencies first
     check_dependencies
-    
+
     case "${1:-}" in
         backup|restore|list)
             # Forward to Python CLI
