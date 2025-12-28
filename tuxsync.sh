@@ -122,31 +122,15 @@ gpgkey=https://repo.charm.sh/yum/gpg.key' | sudo tee /etc/yum.repos.d/charm.repo
     esac
 }
 
-# Install gh (GitHub CLI)
-install_gh() {
-    local pkg_manager
-    pkg_manager=$(detect_package_manager)
-    
-    case "$pkg_manager" in
-        apt)
-            # Install gh from GitHub's official repository
-            type -p curl >/dev/null || sudo apt install curl -y
-            curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg
-            sudo chmod go+r /usr/share/keyrings/githubcli-archive-keyring.gpg
-            echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null
-            sudo apt update && sudo apt install -y gh
-            ;;
-        dnf)
-            sudo dnf install -y gh
-            ;;
-        pacman)
-            sudo pacman -Sy --noconfirm github-cli
-            ;;
-        *)
-            log_error "Unknown package manager. Please install gh manually from https://cli.github.com/"
-            return 1
-            ;;
-    esac
+# Install tuxmate-cli
+install_tuxmate_cli() {
+    log_info "tuxmate-cli is a separate tool. Please install it from:"
+    log_info "https://github.com/Gururagavendra/tuxmate-cli"
+    log_info ""
+    log_info "Installation command:"
+    log_info "pip install git+https://github.com/Gururagavendra/tuxmate-cli.git"
+    log_error "Please install tuxmate-cli manually and try again."
+    exit 1
 }
 
 # Check and install dependencies
@@ -163,9 +147,9 @@ check_dependencies() {
         missing_deps+=("gum")
     fi
     
-    # Check gh (GitHub CLI)
-    if ! command_exists gh; then
-        missing_deps+=("gh")
+    # Check tuxmate-cli
+    if ! command_exists tuxmate-cli; then
+        missing_deps+=("tuxmate-cli")
     fi
     
     if [ ${#missing_deps[@]} -eq 0 ]; then
@@ -208,6 +192,9 @@ install_missing_deps() {
                 ;;
             gh)
                 install_gh
+                ;;
+            tuxmate-cli)
+                install_tuxmate_cli
                 ;;
         esac
         

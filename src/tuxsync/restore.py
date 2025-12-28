@@ -1,6 +1,6 @@
 """
 Restore module for TuxSync.
-Handles restoring packages and configurations using tuxmate as executor.
+Handles restoring packages and configurations using tuxmate-cli as executor.
 """
 
 import subprocess
@@ -17,50 +17,50 @@ from .storage import BackupMetadata, get_storage_backend
 
 console = Console()
 
-# TuxMate GitHub repository for downloading
-TUXMATE_REPO = "https://github.com/Gururagavendra/tuxmate"
-TUXMATE_RAW_URL = f"{TUXMATE_REPO}/releases/latest/download/tuxmate"
-TUXMATE_FALLBACK_URL = f"https://raw.githubusercontent.com/Gururagavendra/tuxmate/main/tuxmate"
+# TuxMate CLI repository for downloading
+TUXMATE_CLI_REPO = "https://github.com/Gururagavendra/tuxmate-cli"
+TUXMATE_CLI_SCRIPT_URL = f"{TUXMATE_CLI_REPO}/releases/latest/download/tuxmate-cli.sh"
+TUXMATE_CLI_FALLBACK_URL = f"https://raw.githubusercontent.com/Gururagavendra/tuxmate-cli/main/tuxmate-cli.sh"
 
 
 class TuxMateExecutor:
     """
-    Executor that uses TuxMate for package installation.
-    
+    Executor that uses TuxMate CLI for package installation.
+
     Follows loose coupling principle - TuxSync is the brain,
-    TuxMate is the hands.
+    TuxMate CLI is the hands.
     """
 
     def __init__(self):
-        self._tuxmate_path: Optional[str] = None
+        self._tuxmate_cli_path: Optional[str] = None
 
-    def find_tuxmate(self) -> Optional[str]:
+    def find_tuxmate_cli(self) -> Optional[str]:
         """
-        Find tuxmate in PATH.
-        
-        Returns:
-            Path to tuxmate if found, None otherwise.
-        """
-        return shutil.which("tuxmate")
+        Find tuxmate-cli in PATH.
 
-    def download_tuxmate(self) -> str:
-        """
-        Download tuxmate to /tmp for temporary use.
-        
         Returns:
-            Path to downloaded tuxmate.
-            
+            Path to tuxmate-cli if found, None otherwise.
+        """
+        return shutil.which("tuxmate-cli")
+
+    def download_tuxmate_cli(self) -> str:
+        """
+        Download tuxmate-cli.sh to /tmp for temporary use.
+
+        Returns:
+            Path to downloaded tuxmate-cli.sh.
+
         Raises:
             RuntimeError: If download fails.
         """
-        console.print("[blue]TuxMate not found in PATH. Downloading...[/blue]")
-        
-        tmp_path = Path("/tmp/tuxmate")
-        
+        console.print("[blue]TuxMate CLI not found in PATH. Downloading...[/blue]")
+
+        tmp_path = Path("/tmp/tuxmate-cli.sh")
+
         # Try multiple download sources
         download_urls = [
-            TUXMATE_RAW_URL,
-            TUXMATE_FALLBACK_URL,
+            TUXMATE_CLI_SCRIPT_URL,
+            TUXMATE_CLI_FALLBACK_URL,
         ]
 
         for url in download_urls:
@@ -71,19 +71,19 @@ class TuxMateExecutor:
                     console=console,
                 ) as progress:
                     task = progress.add_task(f"Downloading from {url}...", total=None)
-                    
+
                     result = subprocess.run(
                         ["curl", "-fsSL", "-o", str(tmp_path), url],
                         capture_output=True,
                         text=True,
                     )
-                    
+
                     progress.update(task, completed=True)
 
                 if result.returncode == 0 and tmp_path.exists():
                     # Make executable
                     tmp_path.chmod(tmp_path.stat().st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
-                    console.print(f"[green]✓ TuxMate downloaded to {tmp_path}[/green]")
+                    console.print(f"[green]✓ TuxMate CLI downloaded to {tmp_path}[/green]")
                     return str(tmp_path)
 
             except subprocess.SubprocessError:
@@ -92,7 +92,7 @@ class TuxMateExecutor:
         # If curl fails, try with wget
         try:
             result = subprocess.run(
-                ["wget", "-q", "-O", str(tmp_path), TUXMATE_FALLBACK_URL],
+                ["wget", "-q", "-O", str(tmp_path), TUXMATE_CLI_FALLBACK_URL],
                 capture_output=True,
             )
             if result.returncode == 0 and tmp_path.exists():
@@ -102,35 +102,42 @@ class TuxMateExecutor:
             pass
 
         raise RuntimeError(
-            "Failed to download TuxMate. Please install it manually:\n"
-            f"  curl -fsSL {TUXMATE_FALLBACK_URL} -o /usr/local/bin/tuxmate\n"
-            "  chmod +x /usr/local/bin/tuxmate"
+            "Failed to download TuxMate CLI. Please install it manually:\n"
+            f"  curl -fsSL {TUXMATE_CLI_FALLBACK_URL} -o /usr/local/bin/tuxmate-cli.sh\n"
+            "  chmod +x /usr/local/bin/tuxmate-cli.sh"
         )
 
-    def get_tuxmate(self) -> str:
+    def get_tuxmate_cli(self) -> str:
         """
-        Get path to tuxmate, downloading if necessary.
-        
+        Get path to tuxmate-cli, downloading if necessary.
+
         Returns:
-            Path to tuxmate executable.
+            Path to tuxmate-cli executable or script.
         """
-        if self._tuxmate_path:
-            return self._tuxmate_path
+        if self._tuxmate_cli_path:
+            return self._tuxmate_cli_path
 
         # Check if already in PATH
-        path = self.find_tuxmate()
+        path = self.find_tuxmate_cli()
         if path:
-            console.print(f"[green]✓ Found TuxMate at {path}[/green]")
-            self._tuxmate_path = path
+            console.print(f"[green]✓ Found TuxMate CLI at {path}[/green]")
+            self._tuxmate_cli_path = path
             return path
 
+        # Check for tuxmate-cli.sh script
+        script_path = shutil.which("tuxmate-cli.sh")
+        if script_path:
+            console.print(f"[green]✓ Found TuxMate CLI script at {script_path}[/green]")
+            self._tuxmate_cli_path = script_path
+            return script_path
+
         # Download to /tmp
-        self._tuxmate_path = self.download_tuxmate()
-        return self._tuxmate_path
+        self._tuxmate_cli_path = self.download_tuxmate_cli()
+        return self._tuxmate_cli_path
 
     def install_packages(self, packages: list[str], dry_run: bool = False) -> bool:
         """
-        Install packages using tuxmate.
+        Install packages using tuxmate-cli.
         
         Args:
             packages: List of package names to install.
@@ -143,9 +150,9 @@ class TuxMateExecutor:
             console.print("[yellow]No packages to install[/yellow]")
             return True
 
-        tuxmate = self.get_tuxmate()
+        tuxmate_cli = self.get_tuxmate_cli()
         
-        console.print(f"\n[blue]Installing {len(packages)} packages via TuxMate...[/blue]")
+        console.print(f"\n[blue]Installing {len(packages)} packages via TuxMate CLI...[/blue]")
 
         if dry_run:
             console.print("[yellow]DRY RUN - Would install:[/yellow]")
@@ -153,41 +160,38 @@ class TuxMateExecutor:
                 console.print(f"  • {pkg}")
             return True
 
-        # Pass packages to tuxmate
-        # TuxMate should handle the actual package manager detection
+        # Use tuxmate-cli install command
         try:
-            # Create a package list file for tuxmate
-            pkg_list_file = Path("/tmp/tuxsync_packages.txt")
-            pkg_list_file.write_text("\n".join(packages))
-
-            # Try different tuxmate invocation patterns
-            # Pattern 1: tuxmate install --file <file>
-            # Pattern 2: tuxmate install <pkg1> <pkg2> ...
-            # Pattern 3: Pass via stdin
-
-            cmd = [tuxmate, "install", "--file", str(pkg_list_file)]
+            # Install packages in batches to avoid command line length limits
+            batch_size = 20  # Smaller batches for better error handling
+            all_success = True
             
-            result = subprocess.run(
-                cmd,
-                capture_output=False,  # Let output show to user
-                text=True,
-            )
-
-            if result.returncode != 0:
-                # Fallback: Try direct package list
-                console.print("[yellow]Trying alternative invocation...[/yellow]")
+            for i in range(0, len(packages), batch_size):
+                batch = packages[i:i + batch_size]
+                console.print(f"[dim]Installing batch {i//batch_size + 1}: {len(batch)} packages[/dim]")
                 
-                # Install in batches to avoid command line length limits
-                batch_size = 50
-                for i in range(0, len(packages), batch_size):
-                    batch = packages[i:i + batch_size]
-                    cmd = [tuxmate, "install"] + batch
-                    subprocess.run(cmd)
-
-            # Cleanup
-            pkg_list_file.unlink(missing_ok=True)
-
-            return True
+                cmd = [tuxmate_cli, "install"] + batch
+                if tuxmate_cli.endswith(".sh"):
+                    # If using the script, add --yes to skip prompts
+                    cmd.append("--yes")
+                
+                result = subprocess.run(
+                    cmd,
+                    capture_output=False,  # Let output show to user
+                    text=True,
+                )
+                
+                if result.returncode != 0:
+                    console.print(f"[red]✗ Batch {i//batch_size + 1} failed with exit code {result.returncode}[/red]")
+                    all_success = False
+                    # Continue with other batches instead of failing completely
+            
+            if all_success:
+                console.print("[green]✓ All packages installed successfully[/green]")
+            else:
+                console.print("[yellow]⚠ Some packages may have failed to install[/yellow]")
+            
+            return all_success
 
         except subprocess.SubprocessError as e:
             console.print(f"[red]Installation failed: {e}[/red]")
