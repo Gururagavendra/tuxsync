@@ -3,9 +3,9 @@
   <p><strong>PROFILE SYNC FOR YOUR LINUX MACHINES</strong></p>
 
 ![Linux](https://img.shields.io/badge/Linux-FCC624?style=for-the-badge&logo=linux&logoColor=black)
+[![PyPI](https://img.shields.io/pypi/v/tuxsync?style=for-the-badge)](https://pypi.org/project/tuxsync/)
 [![Python](https://img.shields.io/badge/python-3.10+-blue?style=for-the-badge&logo=python&logoColor=white)](https://github.com/Gururagavendra/tuxsync)
 [![License](https://img.shields.io/badge/license-GPL--3.0-yellow?style=for-the-badge)](LICENSE)
-[![Status](https://img.shields.io/badge/status-WIP-orange?style=for-the-badge)]()
 [![Maintained](https://img.shields.io/badge/Maintained-Yes-green?style=for-the-badge)]()
 
 </div>
@@ -38,10 +38,7 @@ See [Usage](#usage) section below for detailed commands.
 ## Installation
 
 ```bash
-# Using uv (recommended)
-pip install uv
-cd tuxsync
-uv sync
+pip install tuxsync --upgrade
 ```
 
 ## Development
