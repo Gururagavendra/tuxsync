@@ -57,6 +57,8 @@ tuxsync backup --no-bashrc
 tuxsync backup --github --non-interactive
 ```
 
+> **Note:** Interactive mode (default) guides you through storage selection with prompts and menus. Non-interactive mode (`--non-interactive`) skips prompts for automation - requires `--github` or `--server` flag.
+
 ### Restore on New Machine
 
 ```bash
