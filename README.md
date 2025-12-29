@@ -17,14 +17,15 @@ Backup and restore your packages and configurations across Linux machines - like
 ## Features
 
 ```bash
-# Backup your system
-./tuxsync.sh backup
+# Backup your files from your old machine
+tuxsync backup
 
 # Restore on new machine
-curl -sL https://raw.githubusercontent.com/Gururagavendra/tuxsync/main/restore.sh | bash -s -- <GIST_ID>
+pip install tuxsync
+tuxsync restore <GIST_ID>
 
 # List your backups
-uv run tuxsync list
+tuxsync list
 ```
 
 - **Multi-Distro Support** - Ubuntu/Debian (apt), Fedora (dnf), and Arch (pacman)
@@ -47,48 +48,43 @@ pip install tuxsync --upgrade
 
 ```bash
 # Interactive mode (recommended)
-./tuxsync.sh backup
-
-# Or using uv
-uv run tuxsync backup
+tuxsync backup
 
 # Skip bashrc backup
-uv run tuxsync backup --no-bashrc
+tuxsync backup --no-bashrc
 
 # Direct to GitHub (non-interactive)
-uv run tuxsync backup --github --non-interactive
+tuxsync backup --github --non-interactive
 ```
 
 ### Restore on New Machine
 
 ```bash
-# Using the magic command (shown after backup)
+# Using the magic command (shown after backup, even tuxsync installation not needed on new machine, making it 0 friction )
 curl -sL https://raw.githubusercontent.com/Gururagavendra/tuxsync/main/restore.sh | bash -s -- <GIST_ID>
 
 # Or install TuxSync and restore
-uv run tuxsync restore <GIST_ID>
+tuxsync restore <GIST_ID>
 
 # Dry run to see what would happen
-uv run tuxsync restore <GIST_ID> --dry-run
+tuxsync restore <GIST_ID> --dry-run
 
 # Skip package installation, only restore bashrc
-uv run tuxsync restore <GIST_ID> --skip-packages
+tuxsync restore <GIST_ID> --skip-packages
 ```
 
 ### List Backups
 
 ```bash
-uv run tuxsync list
+tuxsync list
 ```
 
 ## Requirements
 
 - Python 3.10+
 - [GitHub CLI (gh)](https://cli.github.com/) - For GitHub Gist storage
-- [gum](https://github.com/charmbracelet/gum) (optional) - For pretty terminal menus
-- [tuxmate-cli](https://github.com/Gururagavendra/tuxmate-cli) - For cross-distro package installation
-
-The wrapper script (`tuxsync.sh`) will help install missing dependencies.
+- [tuxmate-cli](https://github.com/Gururagavendra/tuxmate-cli) - Auto-installed as dependency
+- [gum](https://github.com/charmbracelet/gum) (optional) - For interactive menus
 
 ## Development
 
@@ -134,7 +130,7 @@ has_bashrc: true
 
 Your raw `~/.bashrc` content (if backed up).
 
-## Custom Server API
+## Custom Server API - WIP(work in progress)
 
 If using `--server`, your server should implement these endpoints:
 
@@ -157,22 +153,6 @@ Response:
   "metadata": { /* tuxsync.yaml content */ },
   "bashrc": "# .bashrc content..."
 }
-```
-
-## Development & Testing
-
-```bash
-# Install dev dependencies
-uv sync --all-extras
-
-# Run tests
-uv run pytest
-
-# Lint
-uv run ruff check src/
-
-# Type check
-uv run mypy src/
 ```
 
 ## Contributing
