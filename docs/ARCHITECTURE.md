@@ -53,9 +53,13 @@
                   │  (external executor)   │
                   │                        │
                   │  Cross-distro install  │
+                  │  Uses tuxmate's DB     │
                   └────────────┬───────────┘
                                ↓
                        📦 Restored System
+
+Note: tuxmate-cli uses the curated package database from
+      tuxmate (https://github.com/abusoww/tuxmate)
 ```
 
 ## Data Flow
