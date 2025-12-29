@@ -12,7 +12,7 @@
 
 ## Migration Assistant for Linux
 
-Backup and restore your packages and configurations across Linux machines - like Apple's Migration Assistant or Chrome Sync, but for your Linux setup.
+Backup and restore your packages and configurations across Linux machines - like Apple's Migration Assistant or Chrome Sync, but **private, open-source, and under your control**. Your data stays in your GitHub account, not some company's servers.
 
 ## Features
 
