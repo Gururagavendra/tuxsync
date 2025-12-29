@@ -83,7 +83,7 @@ tuxsync list
 
 - Python 3.10+
 - [GitHub CLI (gh)](https://cli.github.com/) - For GitHub Gist storage
-- [tuxmate-cli](https://github.com/Gururagavendra/tuxmate-cli) - Auto-installed as dependency
+- [tuxmate-cli](https://github.com/Gururagavendra/tuxmate-cli) - Auto-downloaded when needed
 - [gum](https://github.com/charmbracelet/gum) (optional) - For interactive menus
 
 ## Development
@@ -108,7 +108,7 @@ For detailed architecture and technical specifications, see [ARCHITECTURE.md](do
 
 ## Status: Work in Progress
 
-> ⚠️ **Early Development**: TuxSync is actively being developed. Core features work, but expect changes.
+> **Early Development**: TuxSync is actively being developed.
 
 ### Implemented
 
@@ -118,7 +118,7 @@ For detailed architecture and technical specifications, see [ARCHITECTURE.md](do
 - tuxmate-cli integration
 - Dry-run mode
 
-### later
+### Later
 
 - [ ] Config file syncing (dotfiles) - Basically syncing all your dotfiles, not just bashrc
 - [ ] Incremental backups - Only backup changes since last backup

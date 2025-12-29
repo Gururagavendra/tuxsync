@@ -93,6 +93,32 @@ User → tuxsync restore <GIST_ID> → Storage → Restore Manager → tuxmate-c
 - **Restore Manager**: Orchestrates restoration workflow
 - **Utils**: Helper functions (distro detection, subprocess execution)
 
+## Backup Structure
+
+TuxSync stores backups with two files in a GitHub Gist:
+
+### tuxsync.yaml
+
+```yaml
+version: "1.0"
+created_at: "2024-12-28T10:30:00Z"
+distro: "Ubuntu"
+distro_version: "24.04"
+package_manager: "apt"
+package_count: 142
+packages:
+  - vim
+  - git
+  - docker.io
+  - nodejs
+  # ... more packages
+has_bashrc: true
+```
+
+### bashrc
+
+Raw content of `~/.bashrc` (if backed up).
+
 ## Storage Backend
 
 ### GitHub Gists (Current)
@@ -101,7 +127,7 @@ User → tuxsync restore <GIST_ID> → Storage → Restore Manager → tuxmate-c
 - **Cons**: Requires GitHub CLI (gh), tied to GitHub ecosystem
 - **Format**: YAML with metadata (distro, packages, configs)
 
-### Custom Server (Future)
+### Custom Server
 
 - **Pros**: Complete privacy, self-hosted
 - **Cons**: Requires server setup
