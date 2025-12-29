@@ -1,31 +1,59 @@
-# TuxSync
+<div align="center">
+  <h1>TuxSync</h1>
+  <p><strong>PROFILE SYNC FOR YOUR LINUX MACHINES</strong></p>
 
-**Profile Sync for Linux Users** - Like Apple's Migration Assistant or Chrome Sync, but for your Linux packages and configurations.
+![Linux](https://img.shields.io/badge/Linux-FCC624?style=for-the-badge&logo=linux&logoColor=black)
+[![Python](https://img.shields.io/badge/python-3.10+-blue?style=for-the-badge&logo=python&logoColor=white)](https://github.com/Gururagavendra/tuxsync)
+[![License](https://img.shields.io/badge/license-GPL--3.0-yellow?style=for-the-badge)](LICENSE)
+[![Status](https://img.shields.io/badge/status-WIP-orange?style=for-the-badge)]()
+[![Maintained](https://img.shields.io/badge/Maintained-Yes-green?style=for-the-badge)]()
+
+</div>
+
+## Migration Assistant for Linux
+
+Backup and restore your packages and configurations across Linux machines - like Apple's Migration Assistant or Chrome Sync, but for your Linux setup.
 
 ## Features
 
-- **Multi-Distro Support**: Works on Ubuntu/Debian (apt), Fedora (dnf), and Arch (pacman)
-- **Privacy First**: Choose between GitHub Gists (convenient) or your own custom server (private)
-- **Loose Coupling**: Uses [tuxmate-cli](https://github.com/Gururagavendra/tuxmate-cli) as an external executor - no embedded code
-- **Smart Scanning**: Only backs up user-installed packages, filters out libraries
-- **Magic Restore**: One-liner command to restore your setup on any Linux machine
+```bash
+# Backup your system
+./tuxsync.sh backup
 
-## Quick Start
+# Restore on new machine
+curl -sL https://raw.githubusercontent.com/Gururagavendra/tuxsync/main/restore.sh | bash -s -- <GIST_ID>
 
-### Installation
+# List your backups
+uv run tuxsync list
+```
 
-\`\`\`bash
-# Clone the repository
+- **Multi-Distro Support** - Ubuntu/Debian (apt), Fedora (dnf), and Arch (pacman)
+- **Privacy First** - GitHub Gists (convenient) or your own custom server (private)
+- **Loose Coupling** - Uses [tuxmate-cli](https://github.com/Gururagavendra/tuxmate-cli) as external executor
+- **Smart Scanning** - Only backs up user-installed packages, filters out libraries
+- **Magic Restore** - One-liner command to restore your setup on any Linux machine
+
+See [Usage](#usage) section below for detailed commands.
+
+## Installation
+
+```bash
+# Using uv (recommended)
+pip install uv
+cd tuxsync
+uv sync
+```
+
+## Development
+
+```bash
 git clone https://github.com/Gururagavendra/tuxsync.git
 cd tuxsync
-
-# Install with uv (recommended)
 uv sync
-
-# Or use the wrapper script
-chmod +x tuxsync.sh
 ./tuxsync.sh help
-\`\`\`
+```
+
+## Usage
 
 ### Create a Backup
 
@@ -59,7 +87,7 @@ uv run tuxsync restore <GIST_ID> --dry-run
 uv run tuxsync restore <GIST_ID> --skip-packages
 \`\`\`
 
-### List Your Backups
+### List Backups
 
 \`\`\`bash
 uv run tuxsync list
@@ -67,40 +95,27 @@ uv run tuxsync list
 
 ## Requirements
 
-- **Python 3.10+**
-- **GitHub CLI (gh)** - For GitHub Gist storage: https://cli.github.com/
-- **gum** (optional) - For pretty terminal menus: https://github.com/charmbracelet/gum
-- **tuxmate-cli** - For cross-distro package installation: https://github.com/Gururagavendra/tuxmate-cli
+- Python 3.10+
+- [GitHub CLI (gh)](https://cli.github.com/) - For GitHub Gist storage
+- [gum](https://github.com/charmbracelet/gum) (optional) - For pretty terminal menus
+- [tuxmate-cli](https://github.com/Gururagavendra/tuxmate-cli) - For cross-distro package installation
 
-The wrapper script (\`tuxsync.sh\`) will help install these if missing.
+The wrapper script (`tuxsync.sh`) will help install missing dependencies.
 
 ## Architecture
 
-TuxSync follows a **loose coupling** principle:
+For detailed architecture and design philosophy, see [ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
-\`\`\`
-┌─────────────────────────────────────────────────────────┐
-│                       TuxSync                            │
-│  ┌──────────┐  ┌──────────┐  ┌──────────┐              │
-│  │ Scanner  │  │ Storage  │  │ Restore  │              │
-│  │ (Brain)  │  │ Backend  │  │ Manager  │              │
-│  └────┬─────┘  └────┬─────┘  └────┬─────┘              │
-│       │             │             │                      │
-│       ▼             ▼             ▼                      │
-│  [apt/dnf/     [GitHub/      [tuxmate-cli]               │
-│   pacman]      Custom]        Executor                   │
-└─────────────────────────────────────────────────────────┘
-\`\`\`
+**Quick overview:**
+- **TuxSync** - The Brain (orchestrates backup/restore workflow)
+- **tuxmate-cli** - The Hands (handles cross-distro package installation)
+- **Loose coupling** - Both tools work independently
 
-- **TuxSync** = The Brain (orchestrates everything)
-- **tuxmate-cli** = The Hands (does the actual package installation)
-- If tuxmate-cli isn't installed, TuxSync will fail gracefully with installation instructions
-
-## Configuration
+## Backup Structure
 
 TuxSync creates backups with two files:
 
-### \`tuxsync.yaml\`
+### tuxsync.yaml
 \`\`\`yaml
 version: "1.0"
 created_at: "2024-12-28T10:30:00Z"
@@ -115,36 +130,39 @@ packages:
   - nodejs
   # ... more packages
 has_bashrc: true
-\`\`\`
+```
 
-### \`bashrc\`
-Your raw \`~/.bashrc\` content (if backed up).
+### bashrc
+
+Your raw `~/.bashrc` content (if backed up).
 
 ## Custom Server API
 
-If using \`--server\`, your server should implement:
+If using `--server`, your server should implement these endpoints:
 
-### POST \`/api/backup\`
-\`\`\`json
+### POST /api/backup
+
+```json
 {
   "metadata": { /* tuxsync.yaml content */ },
   "bashrc": "# .bashrc content..."
 }
-\`\`\`
-Response: \`{"backup_id": "unique-id"}\`
+```
+Response: `{"backup_id": "unique-id"}`
 
-### GET \`/api/backup/{backup_id}\`
+### GET /api/backup/{backup_id}
+
 Response:
 \`\`\`json
 {
   "metadata": { /* tuxsync.yaml content */ },
   "bashrc": "# .bashrc content..."
 }
-\`\`\`
+```
 
-## Development
+## Development & Testing
 
-\`\`\`bash
+```bash
 # Install dev dependencies
 uv sync --all-extras
 
@@ -158,10 +176,15 @@ uv run ruff check src/
 uv run mypy src/
 \`\`\`
 
+## Contributing
+
+Contributions welcome! Please feel free to submit issues or pull requests.
+
 ## License
 
-MIT License - See [LICENSE](LICENSE) for details.
+GPL-3.0 License - See [LICENSE](LICENSE) for details.
 
-## Related Projects
+## Credits
 
-- [tuxmate-cli](https://github.com/Gururagavendra/tuxmate-cli) - Cross-distro package installer CLI (used as executor)
+- Package restoration powered by [tuxmate-cli](https://github.com/Gururagavendra/tuxmate-cli)
+- Web interface: [tuxmate](https://github.com/abusoww/tuxmate) by [@abusoww](https://github.com/abusoww)
