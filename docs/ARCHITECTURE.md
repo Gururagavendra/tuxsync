@@ -78,7 +78,7 @@ User → tuxsync backup → Scanner → Storage → GitHub Gist
 ```
 User → tuxsync restore <GIST_ID> → Storage → Restore Manager → tuxmate-cli → System
                                        ↓
-                               Profile Data (JSON)
+                               Profile Data (YAML)
 ```
 
 1. **Storage** fetches profile from GitHub Gist
@@ -99,7 +99,7 @@ User → tuxsync restore <GIST_ID> → Storage → Restore Manager → tuxmate-c
 
 - **Pros**: Free, no server setup, public/private options
 - **Cons**: Requires GitHub CLI (gh), tied to GitHub ecosystem
-- **Format**: JSON with metadata (distro, packages, configs)
+- **Format**: YAML with metadata (distro, packages, configs)
 
 ### Custom Server (Future)
 

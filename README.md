@@ -95,40 +95,16 @@ uv sync
 ./tuxsync.sh help
 ```
 
-## Architecture
+## How It Works
 
-For detailed architecture and design philosophy, see [ARCHITECTURE.md](docs/ARCHITECTURE.md).
+TuxSync creates a backup containing your package list and bashrc, stored as a private GitHub Gist. The restore process fetches this backup and uses [tuxmate-cli](https://github.com/Gururagavendra/tuxmate-cli) to install packages across different Linux distributions.
 
-**Quick overview:**
+**Architecture:**
 - **TuxSync** - The Brain (orchestrates backup/restore workflow)
 - **tuxmate-cli** - The Hands (handles cross-distro package installation)
 - **Loose coupling** - Both tools work independently
 
-## Backup Structure
-
-TuxSync creates backups with two files:
-
-### tuxsync.yaml
-
-```yaml
-version: "1.0"
-created_at: "2024-12-28T10:30:00Z"
-distro: "Ubuntu"
-distro_version: "24.04"
-package_manager: "apt"
-package_count: 142
-packages:
-  - vim
-  - git
-  - docker.io
-  - nodejs
-  # ... more packages
-has_bashrc: true
-```
-
-### bashrc
-
-Your raw `~/.bashrc` content (if backed up).
+For detailed architecture and technical specifications, see [ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
 ## Status: Work in Progress
 
