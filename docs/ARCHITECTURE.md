@@ -106,6 +106,7 @@ User → tuxsync restore <GIST_ID> → Storage → Restore Manager → tuxmate-c
 - **Pros**: Complete privacy, self-hosted
 - **Cons**: Requires server setup
 - **Implementation**: Simple REST API for upload/download
+- **Status**: WIP - See [Custom Server API](CUSTOM_SERVER.md) for details
 
 ## Magic Restore Command
 
@@ -141,14 +142,6 @@ This script:
 - [ ] Profile versioning
 - [ ] PyPI package
 
-## Documentation
-
-- [README](../README.md) - User guide with examples
-
-## Installation and Usage
-
-For detailed installation and usage, see [README.md](../README.md).
-
 ## Design Philosophy
 
 ### Loose Coupling
@@ -171,3 +164,8 @@ This design means:
 3. **User Choice**: Users can use tuxmate-cli directly if they prefer
 4. **Smaller Codebase**: No duplicate package installation logic
 5. **Better Maintenance**: Bugs in one tool don't affect the other
+
+
+## Quick Links
+
+- [README](../README.md) - User guide with examples
