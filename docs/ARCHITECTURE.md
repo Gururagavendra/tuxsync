@@ -155,7 +155,7 @@ This script:
 TuxSync follows a **separation of concerns** principle:
 
 - **TuxSync** = The Brain (orchestrates backup/restore workflow)
-- **tuxmate-cli** = The Hands (handles cross-distro package installation)
+- **tuxmate-cli** = The Hands (handles cross-distro package installation using [tuxmate's](https://github.com/abusoww/tuxmate) curated package database)
 
 This design means:
 - TuxSync calls `tuxmate-cli` as a subprocess (no code sharing)

@@ -101,7 +101,7 @@ TuxSync creates a backup containing your package list and bashrc, stored as a pr
 
 **Architecture:**
 - **TuxSync** - The Brain (orchestrates backup/restore workflow)
-- **tuxmate-cli** - The Hands (handles cross-distro package installation)
+- **tuxmate-cli** - The Hands (handles cross-distro package installation using [tuxmate's](https://github.com/abusoww/tuxmate) curated package database)
 - **Loose coupling** - Both tools work independently
 
 For detailed architecture and technical specifications, see [ARCHITECTURE.md](docs/ARCHITECTURE.md).
@@ -139,4 +139,4 @@ GPL-3.0 License - See [LICENSE](LICENSE) for details.
 ## Credits
 
 - Package restoration powered by [tuxmate-cli](https://github.com/Gururagavendra/tuxmate-cli)
-- Web interface: [tuxmate](https://github.com/abusoww/tuxmate) by [@abusoww](https://github.com/abusoww)
+- Package database from [tuxmate](https://github.com/abusoww/tuxmate) by [@abusoww](https://github.com/abusoww) - curated collection of 150+ Linux applications
