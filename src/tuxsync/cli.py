@@ -3,6 +3,8 @@ CLI module for TuxSync.
 Main entry point with backup and restore commands.
 """
 
+import logging
+import subprocess
 import sys
 from typing import Optional
 
@@ -11,12 +13,21 @@ from rich.console import Console
 from rich.panel import Panel
 
 from . import __version__
+from .config import get_config
 from .restore import RestoreManager
 from .scanner import PackageScanner
 from .storage import BackupResult, get_storage_backend
-from .utils import gum_choose, gum_confirm, gum_input
+from .utils import (
+    ValidationError,
+    gum_choose,
+    gum_confirm,
+    gum_input,
+    sanitize_backup_id,
+    sanitize_url,
+)
 
 console = Console()
+logger = logging.getLogger(__name__)
 
 
 def print_banner():
@@ -220,8 +231,19 @@ def restore(
     """
     print_banner()
 
+    # Validate inputs
+    try:
+        backup_id = sanitize_backup_id(backup_id)
+        if server_url:
+            server_url = sanitize_url(server_url)
+    except ValidationError as e:
+        console.print(f"[bold red]Input validation error: {e}[/bold red]")
+        logger.error(f"Validation error: {e}")
+        sys.exit(1)
+
     # Determine storage type
     storage_type = "custom" if server_url else "github"
+    logger.info(f"Starting restore: backup_id={backup_id}, storage={storage_type}")
 
     # Confirmation (unless --yes or --dry-run)
     if not yes and not dry_run:
@@ -269,8 +291,6 @@ def list(server_url: Optional[str]):
     # List GitHub Gists
     console.print("[blue]Fetching your TuxSync backups from GitHub...[/blue]\n")
 
-    import subprocess
-
     try:
         # Check if gh CLI is installed
         subprocess.run(
@@ -306,8 +326,9 @@ def list(server_url: Optional[str]):
         console.print("[green]Authentication successful![/green]\n")
 
     try:
+        config = get_config()
         result = subprocess.run(
-            ["gh", "gist", "list", "--limit", "20"],
+            ["gh", "gist", "list", "--limit", str(config.gist_list_limit)],
             capture_output=True,
             text=True,
             check=True,
@@ -335,6 +356,11 @@ def list(server_url: Optional[str]):
 
 def main():
     """Main entry point."""
+    # Configure logging at application startup
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    )
     cli()
 
 
