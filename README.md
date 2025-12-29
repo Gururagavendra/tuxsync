@@ -30,7 +30,7 @@ tuxsync list
 
 - **Multi-Distro Support** - Ubuntu/Debian (apt), Fedora (dnf), and Arch (pacman)
 - **Privacy First** - GitHub Gists (convenient) or your own custom server (private)
-- **Loose Coupling** - Uses [tuxmate-cli](https://github.com/Gururagavendra/tuxmate-cli) as external executor
+- **Loose Coupling** - Uses [tuxmate](https://github.com/abusoww/tuxmate),[tuxmate-cli](https://github.com/Gururagavendra/tuxmate-cli) as external executor
 - **Smart Scanning** - Only backs up user-installed packages, filters out libraries
 - **Magic Restore** - One-liner command to restore your setup on any Linux machine
 
@@ -56,6 +56,8 @@ tuxsync backup --no-bashrc
 # Direct to GitHub (non-interactive)
 tuxsync backup --github --non-interactive
 ```
+
+> **Note:** Interactive mode (default) guides you through storage selection with prompts and menus. Non-interactive mode (`--non-interactive`) skips prompts for automation - requires `--github` or `--server` flag.
 
 ### Restore on New Machine
 

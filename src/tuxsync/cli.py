@@ -272,6 +272,40 @@ def list(server_url: Optional[str]):
     import subprocess
 
     try:
+        # Check if gh CLI is installed
+        subprocess.run(
+            ["gh", "--version"],
+            capture_output=True,
+            check=True,
+        )
+    except FileNotFoundError:
+        console.print("[red]GitHub CLI (gh) not found. Please install it.[/red]")
+        console.print("[dim]Install from: https://cli.github.com/[/dim]")
+        return
+
+    # Check authentication status
+    auth_result = subprocess.run(
+        ["gh", "auth", "status"],
+        capture_output=True,
+        text=True,
+    )
+
+    if auth_result.returncode != 0:
+        console.print("[yellow]Not logged in to GitHub[/yellow]")
+        console.print("[blue]Starting GitHub authentication...[/blue]")
+
+        auth_login = subprocess.run(
+            ["gh", "auth", "login", "--web", "-p", "https"],
+            check=False,
+        )
+
+        if auth_login.returncode != 0:
+            console.print("[red]Authentication failed. Please try again.[/red]")
+            return
+
+        console.print("[green]Authentication successful![/green]\n")
+
+    try:
         result = subprocess.run(
             ["gh", "gist", "list", "--limit", "20"],
             capture_output=True,
@@ -297,8 +331,6 @@ def list(server_url: Optional[str]):
 
     except subprocess.CalledProcessError as e:
         console.print(f"[red]Failed to list gists: {e.stderr}[/red]")
-    except FileNotFoundError:
-        console.print("[red]GitHub CLI (gh) not found. Please install it.[/red]")
 
 
 def main():
