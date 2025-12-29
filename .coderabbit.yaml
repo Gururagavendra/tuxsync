@@ -1,0 +1,102 @@
+# CodeRabbit Configuration for TuxSync
+# AI-powered code review settings
+
+# Language and framework specific configurations
+language: python
+reviews:
+  # Enable automatic reviews on PRs
+  auto_review:
+    enabled: true
+    drafts: false
+
+  # Review settings
+  profile: chill
+  request_changes_workflow: false
+  high_level_summary: true
+  poem: false
+  review_status: true
+  collapse_walkthrough: false
+
+  # Auto-approve settings
+  auto_approve:
+    enabled: false
+
+  # What to review
+  path_filters:
+    - "!**/*.md"
+    - "!docs/**"
+    - "!.github/**"
+    - "!*.sh"
+
+  # Code review focus areas
+  focus:
+    - security
+    - performance
+    - best_practices
+    - error_handling
+    - code_style
+    - testing
+    - documentation
+
+# Chat and interaction settings
+chat:
+  auto_reply: true
+
+# Tools and checks to enable
+tools:
+  ruff:
+    enabled: true
+  bandit:
+    enabled: true
+  mypy:
+    enabled: true
+
+# Review guidelines specific to TuxSync
+guidelines:
+  - "Ensure no hardcoded values - use config module"
+  - "Validate all user inputs to prevent injection attacks"
+  - "Add proper error handling and logging"
+  - "Follow clean, modular architecture - no large monolithic files"
+  - "Maintain separation of concerns (components, services, routes, schemas)"
+  - "Use clear naming conventions"
+  - "Add type hints for all functions"
+  - "Ensure subprocess calls use argument lists, not shell strings"
+  - "Add retry logic for network operations"
+  - "Include docstrings for all public functions and classes"
+
+# Python-specific settings
+python:
+  version: "3.9+"
+  style_guide: "PEP 8"
+
+# Ignore patterns
+ignore:
+  - "**/__pycache__/**"
+  - "**/*.pyc"
+  - "**/.pytest_cache/**"
+  - "**/venv/**"
+  - "**/.venv/**"
+  - "**/dist/**"
+  - "**/build/**"
+  - "**/*.egg-info/**"
+
+# Security checks
+security:
+  enabled: true
+  severity_threshold: "medium"
+
+# Performance checks
+performance:
+  enabled: true
+
+# Code complexity limits
+complexity:
+  max_function_length: 50
+  max_class_length: 300
+  max_file_length: 500
+  cyclomatic_complexity: 10
+
+# Testing requirements
+testing:
+  require_tests_for_new_code: true
+  min_coverage_diff: 70
