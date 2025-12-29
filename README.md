@@ -130,6 +130,24 @@ has_bashrc: true
 
 Your raw `~/.bashrc` content (if backed up).
 
+## Status: Work in Progress
+
+> ⚠️ **Early Development**: TuxSync is actively being developed. Core features work, but expect changes.
+
+### Implemented
+
+- Package scanning (apt, dnf, pacman)
+- GitHub Gist storage
+- bashrc backup/restore
+- tuxmate-cli integration
+- Dry-run mode
+
+### later
+
+- [ ] Config file syncing (dotfiles) - Basically syncing all your dotfiles, not just bashrc
+- [ ] Incremental backups - Only backup changes since last backup
+- [ ] Profile versioning - Keep multiple versions/snapshots with timestamps
+
 ## Custom Server Support
 
 Want to host backups on your own server instead of GitHub? See [Custom Server API](docs/CUSTOM_SERVER.md) for implementation details.
