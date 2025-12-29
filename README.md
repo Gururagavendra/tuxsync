@@ -41,15 +41,6 @@ See [Usage](#usage) section below for detailed commands.
 pip install tuxsync --upgrade
 ```
 
-## Development
-
-```bash
-git clone https://github.com/Gururagavendra/tuxsync.git
-cd tuxsync
-uv sync
-./tuxsync.sh help
-```
-
 ## Usage
 
 ### Create a Backup
@@ -98,6 +89,15 @@ uv run tuxsync list
 - [tuxmate-cli](https://github.com/Gururagavendra/tuxmate-cli) - For cross-distro package installation
 
 The wrapper script (`tuxsync.sh`) will help install missing dependencies.
+
+## Development
+
+```bash
+git clone https://github.com/Gururagavendra/tuxsync.git
+cd tuxsync
+uv sync
+./tuxsync.sh help
+```
 
 ## Architecture
 
