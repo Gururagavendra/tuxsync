@@ -122,26 +122,6 @@ This script:
 3. Installs TuxSync
 4. Runs `tuxsync restore <GIST_ID>`
 
-## Status: Work in Progress
-
-> ⚠️ **Early Development**: TuxSync is actively being developed. Core features work, but expect changes.
-
-### Implemented
-
-- ✅ Package scanning (apt, dnf, pacman)
-- ✅ GitHub Gist storage
-- ✅ bashrc backup/restore
-- ✅ tuxmate-cli integration
-- ✅ Dry-run mode
-
-### Coming Soon
-
-- [ ] Config file syncing (dotfiles)
-- [ ] Custom server backend
-- [ ] Incremental backups
-- [ ] Profile versioning
-- [ ] PyPI package
-
 ## Design Philosophy
 
 ### Loose Coupling
