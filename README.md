@@ -57,7 +57,7 @@ uv sync
 
 ### Create a Backup
 
-\`\`\`bash
+```bash
 # Interactive mode (recommended)
 ./tuxsync.sh backup
 
@@ -69,11 +69,11 @@ uv run tuxsync backup --no-bashrc
 
 # Direct to GitHub (non-interactive)
 uv run tuxsync backup --github --non-interactive
-\`\`\`
+```
 
 ### Restore on New Machine
 
-\`\`\`bash
+```bash
 # Using the magic command (shown after backup)
 curl -sL https://raw.githubusercontent.com/Gururagavendra/tuxsync/main/restore.sh | bash -s -- <GIST_ID>
 
@@ -85,13 +85,13 @@ uv run tuxsync restore <GIST_ID> --dry-run
 
 # Skip package installation, only restore bashrc
 uv run tuxsync restore <GIST_ID> --skip-packages
-\`\`\`
+```
 
 ### List Backups
 
-\`\`\`bash
+```bash
 uv run tuxsync list
-\`\`\`
+```
 
 ## Requirements
 
@@ -116,7 +116,8 @@ For detailed architecture and design philosophy, see [ARCHITECTURE.md](docs/ARCH
 TuxSync creates backups with two files:
 
 ### tuxsync.yaml
-\`\`\`yaml
+
+```yaml
 version: "1.0"
 created_at: "2024-12-28T10:30:00Z"
 distro: "Ubuntu"
@@ -153,7 +154,8 @@ Response: `{"backup_id": "unique-id"}`
 ### GET /api/backup/{backup_id}
 
 Response:
-\`\`\`json
+
+```json
 {
   "metadata": { /* tuxsync.yaml content */ },
   "bashrc": "# .bashrc content..."
@@ -174,7 +176,7 @@ uv run ruff check src/
 
 # Type check
 uv run mypy src/
-\`\`\`
+```
 
 ## Contributing
 
