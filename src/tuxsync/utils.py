@@ -1,11 +1,152 @@
 """
 Utilities for TuxSync.
-Helper functions for gum integration and shell operations.
+Helper functions for gum integration, shell operations, and security.
 """
 
+import logging
+import re
 import shutil
 import subprocess
+import time
 from typing import Optional
+
+from .config import get_config
+
+logger = logging.getLogger(__name__)
+
+
+class ValidationError(Exception):
+    """Raised when input validation fails."""
+
+    pass
+
+
+def sanitize_backup_id(backup_id: str) -> str:
+    """
+    Sanitize and validate backup ID to prevent injection attacks.
+
+    GitHub Gist IDs are alphanumeric strings (typically 32 characters).
+
+    Args:
+        backup_id: The backup ID to sanitize.
+
+    Returns:
+        Sanitized backup ID.
+
+    Raises:
+        ValidationError: If backup ID format is invalid.
+    """
+    if not backup_id:
+        raise ValidationError("Backup ID cannot be empty")
+
+    # Strip whitespace
+    backup_id = backup_id.strip()
+
+    # GitHub Gist IDs are alphanumeric, typically 20-40 chars
+    if not re.match(r"^[a-zA-Z0-9]{8,64}$", backup_id):
+        raise ValidationError(
+            f"Invalid backup ID format: '{backup_id}'. "
+            "Expected alphanumeric string (8-64 characters)."
+        )
+
+    return backup_id
+
+
+def sanitize_url(url: str) -> str:
+    """
+    Sanitize and validate URL.
+
+    Args:
+        url: The URL to sanitize.
+
+    Returns:
+        Sanitized URL.
+
+    Raises:
+        ValidationError: If URL format is invalid.
+    """
+    if not url:
+        raise ValidationError("URL cannot be empty")
+
+    url = url.strip()
+
+    # Basic URL validation
+    # Note: Shell-injection protection should be handled at the call site
+    # by passing URLs as subprocess arguments rather than in shell strings
+    if not re.match(
+        r"^https?://[a-zA-Z0-9][-a-zA-Z0-9._~:/?#\[\]@!$&'()*+,;=%]+$", url
+    ):
+        raise ValidationError(f"Invalid URL format: '{url}'")
+
+    return url
+
+
+def run_command_with_retry(
+    command: list[str],
+    max_attempts: Optional[int] = None,
+    timeout: Optional[int] = None,
+    capture_output: bool = True,
+    check: bool = True,
+) -> subprocess.CompletedProcess:
+    """
+    Run command with retry logic and exponential backoff.
+
+    Args:
+        command: Command to run as list of strings.
+        max_attempts: Maximum retry attempts (default from config).
+        timeout: Timeout in seconds (default from config).
+        capture_output: Whether to capture stdout/stderr.
+        check: Whether to raise on non-zero exit code.
+
+    Returns:
+        CompletedProcess result.
+
+    Raises:
+        subprocess.SubprocessError: If all attempts fail.
+    """
+    config = get_config()
+    max_attempts = max_attempts or config.retry_attempts
+    timeout = timeout or config.network_timeout
+
+    last_exception: Optional[Exception] = None
+
+    for attempt in range(1, max_attempts + 1):
+        try:
+            result = subprocess.run(
+                command,
+                capture_output=capture_output,
+                text=True,
+                timeout=timeout,
+                check=check,
+            )
+            return result
+
+        except subprocess.TimeoutExpired as e:
+            last_exception = e
+            logger.warning(
+                f"Command timed out (attempt {attempt}/{max_attempts}): {command[0]}"
+            )
+
+        except subprocess.CalledProcessError as e:
+            last_exception = e
+            logger.warning(
+                f"Command failed (attempt {attempt}/{max_attempts}): "
+                f"{command[0]} - exit code {e.returncode}"
+            )
+
+        except subprocess.SubprocessError as e:
+            last_exception = e
+            logger.warning(f"Command error (attempt {attempt}/{max_attempts}): {e}")
+
+        if attempt < max_attempts:
+            # Exponential backoff
+            sleep_time = config.retry_backoff_base**attempt
+            logger.debug(f"Retrying in {sleep_time:.1f}s...")
+            time.sleep(sleep_time)
+
+    raise subprocess.SubprocessError(
+        f"Command failed after {max_attempts} attempts: {last_exception}"
+    )
 
 
 def gum_available() -> bool:

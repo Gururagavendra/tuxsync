@@ -3,6 +3,7 @@ Restore module for TuxSync.
 Handles restoring packages and configurations using tuxmate-cli as executor.
 """
 
+import logging
 import shutil
 import stat
 import subprocess
@@ -12,16 +13,11 @@ from typing import Optional
 from rich.console import Console
 from rich.progress import Progress, SpinnerColumn, TextColumn
 
+from .config import get_config
 from .storage import get_storage_backend
 
 console = Console()
-
-# TuxMate CLI repository for downloading
-TUXMATE_CLI_REPO = "https://github.com/Gururagavendra/tuxmate-cli"
-TUXMATE_CLI_SCRIPT_URL = f"{TUXMATE_CLI_REPO}/releases/latest/download/tuxmate-cli.sh"
-TUXMATE_CLI_FALLBACK_URL = (
-    "https://raw.githubusercontent.com/Gururagavendra/tuxmate-cli/main/tuxmate-cli.sh"
-)
+logger = logging.getLogger(__name__)
 
 
 class TuxMateExecutor:
@@ -34,6 +30,7 @@ class TuxMateExecutor:
 
     def __init__(self):
         self._tuxmate_cli_path: Optional[str] = None
+        self._config = get_config()
 
     def find_tuxmate_cli(self) -> Optional[str]:
         """
@@ -55,13 +52,14 @@ class TuxMateExecutor:
             RuntimeError: If download fails.
         """
         console.print("[blue]TuxMate CLI not found in PATH. Downloading...[/blue]")
+        logger.info("TuxMate CLI not found, attempting download")
 
-        tmp_path = Path("/tmp/tuxmate-cli.sh")
+        tmp_path = self._config.tmp_dir / "tuxmate-cli.sh"
 
-        # Try multiple download sources
+        # Try multiple download sources from config
         download_urls = [
-            TUXMATE_CLI_SCRIPT_URL,
-            TUXMATE_CLI_FALLBACK_URL,
+            self._config.tuxmate_cli_release_url,
+            self._config.tuxmate_cli_fallback_url,
         ]
 
         for url in download_urls:
@@ -77,6 +75,7 @@ class TuxMateExecutor:
                         ["curl", "-fsSL", "-o", str(tmp_path), url],
                         capture_output=True,
                         text=True,
+                        timeout=self._config.network_timeout,
                     )
 
                     progress.update(task, completed=True)
@@ -92,28 +91,41 @@ class TuxMateExecutor:
                     console.print(
                         f"[green]✓ TuxMate CLI downloaded to {tmp_path}[/green]"
                     )
+                    logger.info(f"TuxMate CLI downloaded to {tmp_path}")
                     return str(tmp_path)
 
-            except subprocess.SubprocessError:
+            except subprocess.TimeoutExpired:
+                logger.warning(f"Download timed out from {url}")
+                continue
+            except subprocess.SubprocessError as e:
+                logger.warning(f"Download failed from {url}: {e}")
                 continue
 
         # If curl fails, try with wget
         try:
             result = subprocess.run(
-                ["wget", "-q", "-O", str(tmp_path), TUXMATE_CLI_FALLBACK_URL],
+                [
+                    "wget",
+                    "-q",
+                    "-O",
+                    str(tmp_path),
+                    self._config.tuxmate_cli_fallback_url,
+                ],
                 capture_output=True,
+                timeout=self._config.network_timeout,
             )
             if result.returncode == 0 and tmp_path.exists():
                 tmp_path.chmod(
                     tmp_path.stat().st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH
                 )
+                logger.info(f"TuxMate CLI downloaded via wget to {tmp_path}")
                 return str(tmp_path)
-        except subprocess.SubprocessError:
-            pass
+        except subprocess.SubprocessError as e:
+            logger.warning(f"wget download failed: {e}")
 
         raise RuntimeError(
             "Failed to download TuxMate CLI. Please install it manually:\n"
-            f"  curl -fsSL {TUXMATE_CLI_FALLBACK_URL} "
+            f"  curl -fsSL {self._config.tuxmate_cli_fallback_url} "
             "-o /usr/local/bin/tuxmate-cli.sh\n"
             "  chmod +x /usr/local/bin/tuxmate-cli.sh"
         )
@@ -166,6 +178,7 @@ class TuxMateExecutor:
         console.print(
             f"\n[blue]Installing {len(packages)} packages via TuxMate CLI...[/blue]"
         )
+        logger.info(f"Starting installation of {len(packages)} packages")
 
         if dry_run:
             console.print("[yellow]DRY RUN - Would install:[/yellow]")
@@ -176,15 +189,17 @@ class TuxMateExecutor:
         # Use tuxmate-cli install command
         try:
             # Install packages in batches to avoid command line length limits
-            batch_size = 20  # Smaller batches for better error handling
+            batch_size = self._config.package_batch_size
             all_success = True
+            failed_batches = []
 
             for i in range(0, len(packages), batch_size):
                 batch = packages[i : i + batch_size]
+                batch_num = i // batch_size + 1
                 console.print(
-                    f"[dim]Installing batch {i // batch_size + 1}: "
-                    f"{len(batch)} packages[/dim]"
+                    f"[dim]Installing batch {batch_num}: {len(batch)} packages[/dim]"
                 )
+                logger.debug(f"Installing batch {batch_num}: {batch}")
 
                 cmd = [tuxmate_cli, "install"] + batch
                 if tuxmate_cli.endswith(".sh"):
@@ -199,26 +214,34 @@ class TuxMateExecutor:
 
                 if result.returncode != 0:
                     console.print(
-                        f"[red]✗ Batch {i // batch_size + 1} failed with "
+                        f"[red]✗ Batch {batch_num} failed with "
                         f"exit code {result.returncode}[/red]"
                     )
+                    logger.error(
+                        f"Batch {batch_num} failed (exit {result.returncode}): {batch}"
+                    )
                     all_success = False
+                    failed_batches.append(batch_num)
                     # Continue with other batches instead of failing completely
 
             if all_success:
                 console.print("[green]✓ All packages installed successfully[/green]")
+                logger.info("All packages installed successfully")
             else:
                 console.print(
-                    "[yellow]⚠ Some packages may have failed to install[/yellow]"
+                    f"[yellow]⚠ {len(failed_batches)} batch(es) failed[/yellow]"
                 )
+                logger.warning(f"Failed batches: {failed_batches}")
 
             return all_success
 
         except subprocess.SubprocessError as e:
             console.print(f"[red]Installation failed: {e}[/red]")
+            logger.error(f"Installation subprocess error: {e}")
             return False
         except Exception as e:
             console.print(f"[red]Unexpected error: {e}[/red]")
+            logger.exception(f"Unexpected installation error: {e}")
             return False
 
 

@@ -4,6 +4,7 @@ Handles backup storage to GitHub Gists or custom servers.
 """
 
 import datetime
+import logging
 import subprocess
 from abc import ABC, abstractmethod
 from dataclasses import asdict, dataclass
@@ -14,9 +15,17 @@ import requests
 import yaml
 from rich.console import Console
 
+from .config import get_config
 from .scanner import ScanResult
+from .utils import (
+    ValidationError,
+    run_command_with_retry,
+    sanitize_backup_id,
+    sanitize_url,
+)
 
 console = Console()
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -201,13 +210,14 @@ class GitHubStorage(StorageBackend):
                 gist_url = result.stdout.strip()
                 gist_id = gist_url.split("/")[-1]
 
+                config = get_config()
                 restore_cmd = (
-                    f"curl -sL https://raw.githubusercontent.com/"
-                    f"Gururagavendra/tuxsync/main/restore.sh | bash -s -- {gist_id}"
+                    f"curl -sL {config.restore_script_url} | bash -s -- {gist_id}"
                 )
 
                 console.print("[green]✓ Backup created successfully![/green]")
                 console.print(f"  Gist URL: {gist_url}")
+                logger.info(f"Backup created successfully: {gist_id}")
 
                 return BackupResult(
                     success=True,
@@ -227,15 +237,19 @@ class GitHubStorage(StorageBackend):
 
     def load(self, backup_id: str) -> tuple[BackupMetadata, Optional[str]]:
         """Load backup from a GitHub Gist."""
+        # Validate backup_id to prevent command injection
+        try:
+            backup_id = sanitize_backup_id(backup_id)
+        except ValidationError as e:
+            raise RuntimeError(str(e))
+
         console.print(f"[blue]Fetching backup {backup_id}...[/blue]")
+        logger.info(f"Loading backup: {backup_id}")
 
         try:
-            # Get gist files
-            result = subprocess.run(
+            # Get gist files using retry logic
+            result = run_command_with_retry(
                 ["gh", "gist", "view", backup_id, "--raw", "-f", "tuxsync.yaml"],
-                capture_output=True,
-                text=True,
-                check=True,
             )
             yaml_content = result.stdout
             metadata = BackupMetadata.from_yaml(yaml_content)
@@ -244,15 +258,13 @@ class GitHubStorage(StorageBackend):
             bashrc_content = None
             if metadata.has_bashrc:
                 try:
-                    result = subprocess.run(
+                    result = run_command_with_retry(
                         ["gh", "gist", "view", backup_id, "--raw", "-f", "bashrc"],
-                        capture_output=True,
-                        text=True,
-                        check=True,
                     )
                     bashrc_content = result.stdout
-                except subprocess.CalledProcessError:
+                except subprocess.SubprocessError:
                     console.print("[yellow]Warning: Could not fetch bashrc[/yellow]")
+                    logger.warning(f"Failed to fetch bashrc for backup {backup_id}")
 
             return metadata, bashrc_content
 
@@ -269,12 +281,18 @@ class CustomServerStorage(StorageBackend):
 
         Args:
             server_url: Base URL of the storage server.
+
+        Raises:
+            ValidationError: If server URL is invalid.
         """
-        self.server_url = server_url.rstrip("/")
+        # Validate URL to prevent injection attacks
+        self.server_url = sanitize_url(server_url.rstrip("/"))
 
     def save(self, scan: ScanResult) -> BackupResult:
         """Save scan result to custom server."""
+        config = get_config()
         console.print(f"[blue]Uploading to {self.server_url}...[/blue]")
+        logger.info(f"Uploading backup to custom server: {self.server_url}")
 
         metadata = BackupMetadata.from_scan_result(scan)
 
@@ -288,7 +306,7 @@ class CustomServerStorage(StorageBackend):
                 f"{self.server_url}/api/backup",
                 json=payload,
                 headers={"Content-Type": "application/json"},
-                timeout=30,
+                timeout=config.network_timeout,
             )
             response.raise_for_status()
 
@@ -298,6 +316,7 @@ class CustomServerStorage(StorageBackend):
             restore_cmd = f"tuxsync restore --server {self.server_url} {backup_id}"
 
             console.print("[green]✓ Backup uploaded successfully![/green]")
+            logger.info(f"Backup uploaded successfully: {backup_id}")
 
             return BackupResult(
                 success=True,
@@ -306,7 +325,18 @@ class CustomServerStorage(StorageBackend):
                 restore_command=restore_cmd,
             )
 
+        except requests.Timeout:
+            error_msg = f"Connection timed out after {config.network_timeout}s"
+            logger.error(error_msg)
+            return BackupResult(
+                success=False,
+                backup_id="",
+                storage_type="custom",
+                restore_command="",
+                error=error_msg,
+            )
         except requests.RequestException as e:
+            logger.error(f"Failed to upload backup: {e}")
             return BackupResult(
                 success=False,
                 backup_id="",
@@ -317,14 +347,22 @@ class CustomServerStorage(StorageBackend):
 
     def load(self, backup_id: str) -> tuple[BackupMetadata, Optional[str]]:
         """Load backup from custom server."""
+        # Validate backup_id
+        try:
+            backup_id = sanitize_backup_id(backup_id)
+        except ValidationError as e:
+            raise RuntimeError(str(e))
+
+        config = get_config()
         console.print(
             f"[blue]Fetching backup {backup_id} from {self.server_url}...[/blue]"
         )
+        logger.info(f"Fetching backup {backup_id} from {self.server_url}")
 
         try:
             response = requests.get(
                 f"{self.server_url}/api/backup/{backup_id}",
-                timeout=30,
+                timeout=config.network_timeout,
             )
             response.raise_for_status()
 
