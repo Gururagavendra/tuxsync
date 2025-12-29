@@ -130,30 +130,9 @@ has_bashrc: true
 
 Your raw `~/.bashrc` content (if backed up).
 
-## Custom Server API - WIP(work in progress)
+## Custom Server Support
 
-If using `--server`, your server should implement these endpoints:
-
-### POST /api/backup
-
-```json
-{
-  "metadata": { /* tuxsync.yaml content */ },
-  "bashrc": "# .bashrc content..."
-}
-```
-Response: `{"backup_id": "unique-id"}`
-
-### GET /api/backup/{backup_id}
-
-Response:
-
-```json
-{
-  "metadata": { /* tuxsync.yaml content */ },
-  "bashrc": "# .bashrc content..."
-}
-```
+Want to host backups on your own server instead of GitHub? See [Custom Server API](docs/CUSTOM_SERVER.md) for implementation details.
 
 ## Contributing
 

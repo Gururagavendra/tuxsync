@@ -58,28 +58,6 @@
                        📦 Restored System
 ```
 
-## Design Philosophy
-
-### Loose Coupling
-
-TuxSync follows a **separation of concerns** principle:
-
-- **TuxSync** = The Brain (orchestrates backup/restore workflow)
-- **tuxmate-cli** = The Hands (handles cross-distro package installation)
-
-This means:
-- TuxSync calls `tuxmate-cli` as a subprocess (no code sharing)
-- If tuxmate-cli isn't installed, TuxSync fails gracefully with installation instructions
-- Updates to either tool don't break the other
-- Users can use tuxmate-cli independently
-
-### Why Not Embed tuxmate-cli?
-
-1. **Single Responsibility**: Each tool does one thing well
-2. **Independent Updates**: tuxmate-cli can improve without TuxSync changes
-3. **User Choice**: Users can use tuxmate-cli directly if they prefer
-4. **Smaller Codebase**: No duplicate package installation logic
-
 ## Data Flow
 
 ### Backup Flow
@@ -170,3 +148,26 @@ This script:
 ## Installation and Usage
 
 For detailed installation and usage, see [README.md](../README.md).
+
+## Design Philosophy
+
+### Loose Coupling
+
+TuxSync follows a **separation of concerns** principle:
+
+- **TuxSync** = The Brain (orchestrates backup/restore workflow)
+- **tuxmate-cli** = The Hands (handles cross-distro package installation)
+
+This design means:
+- TuxSync calls `tuxmate-cli` as a subprocess (no code sharing)
+- If tuxmate-cli isn't installed, TuxSync auto-downloads it gracefully
+- Updates to either tool don't break the other
+- Users can use tuxmate-cli independently for package installation
+
+### Why This Architecture?
+
+1. **Single Responsibility**: Each tool does one thing well
+2. **Independent Updates**: tuxmate-cli can improve without TuxSync changes
+3. **User Choice**: Users can use tuxmate-cli directly if they prefer
+4. **Smaller Codebase**: No duplicate package installation logic
+5. **Better Maintenance**: Bugs in one tool don't affect the other
