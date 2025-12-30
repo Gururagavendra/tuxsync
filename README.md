@@ -250,3 +250,4 @@ GPL-3.0 License - See [LICENSE](LICENSE) for details.
 
 - Package restoration powered by [tuxmate-cli](https://github.com/Gururagavendra/tuxmate-cli)
 - Package database from [tuxmate](https://github.com/abusoww/tuxmate) by [@abusoww](https://github.com/abusoww) - curated collection of 150+ Linux applications
+- dotfile management from [chezmoi](https://github.com/twpayne/chezmoi)
