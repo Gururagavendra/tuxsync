@@ -81,6 +81,47 @@ def sanitize_url(url: str) -> str:
     return url
 
 
+def run_command(
+    command: list[str] | str,
+    shell: bool = False,
+    cwd: Optional[str] = None,
+    capture_output: bool = False,
+    check: bool = True,
+) -> subprocess.CompletedProcess:
+    """
+    Run a command without retry logic (for simple operations).
+
+    This is a lightweight wrapper for subprocess.run() used by external
+    integrations (like chezmoi) that don't need retry logic.
+
+    SECURITY WARNING: When shell=True, the command is executed through the
+    shell. Only use shell=True with hardcoded commands, NEVER with user input.
+    Prefer passing command as a list of strings with shell=False (default)
+    to prevent shell injection attacks.
+
+    Args:
+        command: Command to run as list of strings or string (if shell=True).
+        shell: Whether to run command through shell. AVOID with user input.
+        cwd: Working directory for command execution.
+        capture_output: Whether to capture stdout/stderr.
+        check: Whether to raise on non-zero exit code.
+
+    Returns:
+        CompletedProcess result.
+
+    Raises:
+        subprocess.SubprocessError: If command fails and check=True.
+    """
+    return subprocess.run(
+        command,
+        shell=shell,
+        cwd=cwd,
+        capture_output=capture_output,
+        text=True,
+        check=check,
+    )
+
+
 def run_command_with_retry(
     command: list[str],
     max_attempts: Optional[int] = None,

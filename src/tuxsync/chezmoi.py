@@ -154,7 +154,7 @@ class ChezmoiManager:
         """Push chezmoi changes to remote repository.
 
         Returns:
-            True if push succeeded, False otherwise
+            True if push succeeded (or no changes to push), False on error
         """
         source_dir = self.get_source_dir()
         if not source_dir:
@@ -165,6 +165,20 @@ class ChezmoiManager:
             print("📤 Pushing dotfiles to remote repository...")
             # Run git commands in the chezmoi source directory
             run_command(["git", "add", "."], cwd=str(source_dir))
+
+            # Check if there are changes to commit
+            status_result = run_command(
+                ["git", "status", "--porcelain"],
+                cwd=str(source_dir),
+                capture_output=True,
+                check=False,
+            )
+
+            if not status_result.stdout.strip():
+                print("✓ No changes to push (dotfiles already up to date)")
+                return True
+
+            # Commit and push only if there are changes
             run_command(
                 ["git", "commit", "-m", "Update dotfiles via tuxsync"],
                 cwd=str(source_dir),
