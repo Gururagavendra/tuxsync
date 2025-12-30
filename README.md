@@ -18,18 +18,18 @@ Backup and restore your packages and configurations across Linux machines - like
 
 ```bash
 # Backup your files from your old machine
-#basuc backup (apps+packages+bashrc)
-tuxsync backup
+  # basic backup (apps+packages+bashrc)
+  tuxsync backup
 
-#full backup (apps+packages+dotfiles+secrets(encrypted))
-tuxsync backup --use-chezmoi --chezmoi-repo username/dotfiles
+  # full backup (apps+packages+dotfiles+secrets(encrypted))
+  tuxsync backup --use-chezmoi --chezmoi-repo username/dotfiles
 
 # Restore on new machine
-pip install tuxsync
-tuxsync restore <GIST_ID>
+  pip install tuxsync
+  tuxsync restore <GIST_ID>
 
 # List your backups
-tuxsync list
+  tuxsync list
 ```
 
 - **Multi-Distro Support** - Ubuntu/Debian (apt), Fedora (dnf), and Arch (pacman)
