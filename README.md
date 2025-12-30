@@ -21,7 +21,7 @@ Backup and restore your packages and configurations across Linux machines - like
 # basic backup (apps+packages+bashrc)
 tuxsync backup
 
-# full backup (apps+packages+dotfiles+secrets(encrypted))
+# full backup (apps+packages+all-dotfiles+config-files+secrets(encrypted))
 tuxsync backup --use-chezmoi --chezmoi-repo username/dotfiles
 
 # Restore on new machine
