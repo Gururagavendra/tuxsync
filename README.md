@@ -219,14 +219,13 @@ TuxSync creates a backup containing your package list and bashrc, stored as a pr
 - **TuxSync** - The Orchestrator (coordinates backup/restore workflow)
 - **tuxmate-cli** - Package Manager (handles cross-distro package installation using [tuxmate's](https://github.com/abusoww/tuxmate) curated package database)
 - **chezmoi** - Dotfile Manager (optional integration for comprehensive dotfile syncing)
-**DManaging Dotfiles with Chezmoi](docs/CHEZMOI_MANAGEMENT.md) - Complete guide to adding and managing dotfiles
+
+**Documentation:**
+- [Managing Dotfiles with Chezmoi](docs/CHEZMOI_MANAGEMENT.md) - Complete guide to adding and managing dotfiles
 - [Chezmoi Workflow](docs/CHEZMOI_WORKFLOW.md) - Behind-the-scenes commands and processes
 - [Backing Up Sensitive Credentials](docs/SECURITY_CREDENTIALS.md) - Security best practices for SSH keys, credentials
 - [Architecture Overview](docs/ARCHITECTURE.md) - Technical specifications and design philosophy
-- [Chezmoi Workflow](docs/CHEZMOI_WORKFLOW.md) - Detailed explanation of what happens behind the scenes with `--use-chezmoi`
 - [Custom Server API](docs/CUSTOM_SERVER.md) - Self-host your backups
-
-For detailed architecture and technical specifications, see [ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
 ## Managing Dotfiles with Chezmoi
 
@@ -234,16 +233,7 @@ When using `--use-chezmoi`, TuxSync integrates with [chezmoi](https://www.chezmo
 
 ### Quick Overview
 
-**⚠️ Important:** Chezmoi does NOT automatically add files - you have full control.
-
-**What's backed up automatically:**
-- ✅ Package list (GitHub Gist)
-- ✅ `~/.bashrc` (GitHub Gist)
-
-**What you can add manually:**
-- Configuration files (`.vimrc`, `.gitconfig`, `.zshrc`)
-- Entire directories (`~/.config/nvim`, `~/.config/i3`)
-- Sensitive files (SSH keys, credentials) - **with encryption**
+**Important:** Chezmoi does NOT automatically add files - you have full control over what gets backed up.
 
 ### Quick Start
 
@@ -295,16 +285,9 @@ cd ~/.local/share/chezmoi && git push
 tuxsync restore <GIST_ID> --use-chezmoi --chezmoi-repo username/dotfiles
 ```
 
-**What can be backed up safely:**
-- 🔐 SSH private keys (encrypted)
-- 🐳 Docker/container registry credentials (encrypted)
-- ☁️ Cloud provider credentials - AWS, GCP, Azure (encrypted)
-- 🎯 Kubernetes configs (encrypted)
-- 🔑 API tokens and secrets (encrypted)
+**Important:** All sensitive data (SSH keys, credentials, tokens) is **encrypted before leaving your machine** using [age](https://age-encryption.org/) or GPG encryption. Your secrets are never stored in plain text.
 
-**Important:** All sensitive data is **encrypted before leaving your machine** using [age](https://age-encryption.org/) or GPG encryption. Your secrets are never stored in plain text.
-
-📖 **[Full Guide: Backing Up Sensitive Credentials](docs/SECURITY_CREDENTIALS.md)** - Detailed security guide with best practices, step-by-step instructions, and troubleshooting.
+📖 **[Full Guide: Backing Up Sensitive Credentials](docs/SECURITY_CREDENTIALS.md)** - Detailed security guide covering SSH keys, Docker credentials, cloud provider tokens, and more.
 
 ---
 
