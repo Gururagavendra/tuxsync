@@ -30,7 +30,7 @@ tuxsync list
 
 - **Multi-Distro Support** - Ubuntu/Debian (apt), Fedora (dnf), and Arch (pacman)
 - **Privacy First** - GitHub Gists (convenient) or your own custom server (private)
-- **Chezmoi Integration** - Optional comprehensive dotfile management with encryption support
+- **Chezmoi Integration** - Optional comprehensive dotfile management with encryption support ([see how it works](docs/CHEZMOI_WORKFLOW.md))
 - **Loose Coupling** - Uses [tuxmate](https://github.com/abusoww/tuxmate), [tuxmate-cli](https://github.com/Gururagavendra/tuxmate-cli), and [chezmoi](https://github.com/twpayne/chezmoi) as external executors
 - **Smart Scanning** - Only backs up user-installed packages, filters out libraries
 - **Magic Restore** - One-liner command to restore your setup on any Linux machine
@@ -86,6 +86,8 @@ tuxsync backup --use-chezmoi --chezmoi-repo username/dotfiles
    - All configs in `~/.config/` (nvim, i3, tmux, etc.)
    - SSH configs, custom scripts, everything!
 4. Commits and pushes to your dotfiles repository
+
+💡 **Want to know exactly what commands run behind the scenes?** See [Chezmoi Workflow Documentation](docs/CHEZMOI_WORKFLOW.md)
 
 ### Basic Restore (Packages Only)
 
@@ -211,7 +213,10 @@ TuxSync creates a backup containing your package list and bashrc, stored as a pr
 - **TuxSync** - The Orchestrator (coordinates backup/restore workflow)
 - **tuxmate-cli** - Package Manager (handles cross-distro package installation using [tuxmate's](https://github.com/abusoww/tuxmate) curated package database)
 - **chezmoi** - Dotfile Manager (optional integration for comprehensive dotfile syncing)
-- **Loose coupling** - All tools work independently, TuxSync orchestrates them
+**Documentation:**
+- [Architecture Overview](docs/ARCHITECTURE.md) - Technical specifications and design philosophy
+- [Chezmoi Workflow](docs/CHEZMOI_WORKFLOW.md) - Detailed explanation of what happens behind the scenes with `--use-chezmoi`
+- [Custom Server API](docs/CUSTOM_SERVER.md) - Self-host your backups
 
 For detailed architecture and technical specifications, see [ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
