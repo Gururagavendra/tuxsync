@@ -30,7 +30,7 @@ tuxsync list
 
 - **Multi-Distro Support** - Ubuntu/Debian (apt), Fedora (dnf), and Arch (pacman)
 - **Privacy First** - GitHub Gists (convenient) or your own custom server (private)
-- **Chezmoi Integration** - Optional comprehensive dotfile management with encryption support ([see how it works](docs/CHEZMOI_WORKFLOW.md))
+- **Chezmoi Integration** - Optional comprehensive dotfile management with encryption support ([guide](docs/CHEZMOI_MANAGEMENT.md))
 - **Loose Coupling** - Uses [tuxmate](https://github.com/abusoww/tuxmate), [tuxmate-cli](https://github.com/Gururagavendra/tuxmate-cli), and [chezmoi](https://github.com/twpayne/chezmoi) as external executors
 - **Smart Scanning** - Only backs up user-installed packages, filters out libraries
 - **Magic Restore** - One-liner command to restore your setup on any Linux machine
@@ -81,13 +81,13 @@ tuxsync backup --use-chezmoi --chezmoi-repo username/dotfiles
 **What happens:**
 1. Backs up all packages (same as basic)
 2. **Auto-installs chezmoi** if not present
-3. Backs up **ALL your dotfiles** to a GitHub repo:
-   - `.bashrc`, `.zshrc`, `.vimrc`, `.gitconfig`
-   - All configs in `~/.config/` (nvim, i3, tmux, etc.)
-   - SSH configs, custom scripts, everything!
-4. Commits and pushes to your dotfiles repository
+3. Initializes chezmoi with your dotfiles repository
+4. You can then add your dotfiles manually
 
-💡 **Want to know exactly what commands run behind the scenes?** See [Chezmoi Workflow Documentation](docs/CHEZMOI_WORKFLOW.md)
+💡 **Learn more:**
+- [What files are backed up by default?](docs/CHEZMOI_MANAGEMENT.md#understanding-the-defaults)
+- [How to add more dotfiles](docs/CHEZMOI_MANAGEMENT.md#adding-files-to-chezmoi)
+- [Behind the scenes: Chezmoi Workflow](docs/CHEZMOI_WORKFLOW.md)
 
 ### Basic Restore (Packages Only)
 
@@ -183,10 +183,12 @@ $ tuxsync restore abc123def456 --use-chezmoi --chezmoi-repo user/dotfiles
 | User-installed packages | ✅ | ✅ |
 | System libraries | ❌ (auto-filtered) | ❌ |
 | `~/.bashrc` | ✅ | ✅ |
-| All dotfiles (`~/.vimrc`, `~/.gitconfig`, etc.) | ❌ | ✅ |
-| Entire `~/.config/` directory | ❌ | ✅ |
-| SSH configs | ❌ | ✅ (optional) |
-| Encrypted secrets | ❌ | ✅ (chezmoi supports) |
+| All dotfiles (`~/.vimrc`, `~/.gitconfig`, etc.) | ❌ | ✅ (manual) |
+| Entire `~/.config/` directory | ❌ | ✅ (manual) |
+| SSH configs | ❌ | ✅ (manual, encrypted) |
+| Encrypted secrets | ❌ | ✅ (manual, encrypted) |
+
+See [Managing Dotfiles with Chezmoi](docs/CHEZMOI_MANAGEMENT.md) for details on what's automatic vs manual.
 
 ## Requirements
 
@@ -213,12 +215,94 @@ TuxSync creates a backup containing your package list and bashrc, stored as a pr
 - **TuxSync** - The Orchestrator (coordinates backup/restore workflow)
 - **tuxmate-cli** - Package Manager (handles cross-distro package installation using [tuxmate's](https://github.com/abusoww/tuxmate) curated package database)
 - **chezmoi** - Dotfile Manager (optional integration for comprehensive dotfile syncing)
-**Documentation:**
+**DManaging Dotfiles with Chezmoi](docs/CHEZMOI_MANAGEMENT.md) - Complete guide to adding and managing dotfiles
+- [Chezmoi Workflow](docs/CHEZMOI_WORKFLOW.md) - Behind-the-scenes commands and processes
+- [Backing Up Sensitive Credentials](docs/SECURITY_CREDENTIALS.md) - Security best practices for SSH keys, credentials
 - [Architecture Overview](docs/ARCHITECTURE.md) - Technical specifications and design philosophy
 - [Chezmoi Workflow](docs/CHEZMOI_WORKFLOW.md) - Detailed explanation of what happens behind the scenes with `--use-chezmoi`
 - [Custom Server API](docs/CUSTOM_SERVER.md) - Self-host your backups
 
 For detailed architecture and technical specifications, see [ARCHITECTURE.md](docs/ARCHITECTURE.md).
+
+## Managing Dotfiles with Chezmoi
+
+When using `--use-chezmoi`, TuxSync integrates with [chezmoi](https://www.chezmoi.io/) for comprehensive dotfile management.
+
+### Quick Overview
+
+**⚠️ Important:** Chezmoi does NOT automatically add files - you have full control.
+
+**What's backed up automatically:**
+- ✅ Package list (GitHub Gist)
+- ✅ `~/.bashrc` (GitHub Gist)
+
+**What you can add manually:**
+- Configuration files (`.vimrc`, `.gitconfig`, `.zshrc`)
+- Entire directories (`~/.config/nvim`, `~/.config/i3`)
+- Sensitive files (SSH keys, credentials) - **with encryption**
+
+### Quick Start
+
+```bash
+# Initial backup
+tuxsync backup --use-chezmoi --chezmoi-repo username/dotfiles
+
+# Add dotfiles
+chezmoi add ~/.vimrc ~/.gitconfig ~/.config/nvim
+
+# Add encrypted secrets
+chezmoi add --encrypt ~/.ssh/id_rsa
+chezmoi add --encrypt ~/.docker/config.json
+
+# View managed files
+chezmoi managed
+
+# Push changes
+cd ~/.local/share/chezmoi && git push
+```
+
+📖 **[Complete Guide: Managing Dotfiles with Chezmoi](docs/CHEZMOI_MANAGEMENT.md)**  
+Detailed instructions on adding files, encryption setup, exclusions, and troubleshooting.
+
+---
+
+## Backing Up Sensitive Credentials
+
+TuxSync supports backing up sensitive data like **SSH keys, Docker credentials, cloud provider tokens, and more** using encrypted storage via chezmoi integration.
+
+### Quick Overview
+
+```bash
+# Step 1: Setup encryption (one-time)
+sudo apt install age
+age-keygen -o ~/.config/chezmoi/key.txt
+
+# Step 2: Backup with chezmoi
+tuxsync backup --use-chezmoi --chezmoi-repo username/dotfiles
+
+# Step 3: Add encrypted secrets
+chezmoi add --encrypt ~/.ssh/id_rsa
+chezmoi add --encrypt ~/.docker/config.json
+
+# Step 4: Push to repo
+cd ~/.local/share/chezmoi && git push
+
+# On new machine - credentials are automatically restored
+tuxsync restore <GIST_ID> --use-chezmoi --chezmoi-repo username/dotfiles
+```
+
+**What can be backed up safely:**
+- 🔐 SSH private keys (encrypted)
+- 🐳 Docker/container registry credentials (encrypted)
+- ☁️ Cloud provider credentials - AWS, GCP, Azure (encrypted)
+- 🎯 Kubernetes configs (encrypted)
+- 🔑 API tokens and secrets (encrypted)
+
+**Important:** All sensitive data is **encrypted before leaving your machine** using [age](https://age-encryption.org/) or GPG encryption. Your secrets are never stored in plain text.
+
+📖 **[Full Guide: Backing Up Sensitive Credentials](docs/SECURITY_CREDENTIALS.md)** - Detailed security guide with best practices, step-by-step instructions, and troubleshooting.
+
+---
 
 ## Status: Work in Progress
 
@@ -232,9 +316,12 @@ For detailed architecture and technical specifications, see [ARCHITECTURE.md](do
 - ✅ tuxmate-cli integration
 - ✅ Dry-run mode
 - ✅ **Chezmoi integration** - Comprehensive dotfile management
+- ✅ **Encrypted secrets support** - SSH keys, credentials, tokens
 
 ### Later
 
+- [ ] Sensitive file auto-detection with encryption prompts
+- [ ] Credential rotation helper on restore
 - [ ] Incremental backups - Only backup changes since last backup
 - [ ] Profile versioning - Keep multiple versions/snapshots with timestamps
 - [ ] Custom backup schedules and automation
