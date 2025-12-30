@@ -92,17 +92,31 @@ def cli():
     default=False,
     help="Run without interactive prompts (requires --github or --server)",
 )
+@click.option(
+    "--use-chezmoi",
+    is_flag=True,
+    default=False,
+    help="Use chezmoi for comprehensive dotfile management",
+)
+@click.option(
+    "--chezmoi-repo",
+    default=None,
+    help="GitHub repository for chezmoi dotfiles (e.g., user/dotfiles)",
+)
 def backup(
     no_bashrc: bool,
     storage_type: Optional[str],
     server_url: Optional[str],
     non_interactive: bool,
+    use_chezmoi: bool,
+    chezmoi_repo: Optional[str],
 ):
     """
     Create a backup of installed packages and configurations.
 
     Scans your system for user-installed packages and optionally
-    backs up your ~/.bashrc file.
+    backs up your ~/.bashrc file. With --use-chezmoi, delegates
+    comprehensive dotfile management to chezmoi.
     """
     print_banner()
     console.print("[bold]Starting Backup...[/bold]\n")
@@ -122,7 +136,43 @@ def backup(
     console.print(f"  Distro: {scan_result.distro} {scan_result.distro_version}")
     console.print(f"  Packages: {len(scan_result.packages)}")
     console.print(f"  Bashrc: {'✓' if scan_result.bashrc_content else '✗'}")
+    console.print(f"  Chezmoi: {'✓' if use_chezmoi else '✗'}")
     console.print()
+
+    # Phase 1.5: Chezmoi integration (optional)
+    if use_chezmoi:
+        try:
+            from .chezmoi import ensure_chezmoi
+
+            chezmoi_mgr = ensure_chezmoi(auto_install=not non_interactive)
+            if chezmoi_mgr:
+                console.print("[blue]📁 Managing dotfiles with chezmoi...[/blue]")
+                if chezmoi_repo:
+                    # User provided repo, initialize and push
+                    chezmoi_mgr.init_repo(chezmoi_repo)
+                    chezmoi_mgr.git_push()
+                    console.print(
+                        f"[green]✓ Dotfiles backed up to {chezmoi_repo}[/green]"
+                    )
+                else:
+                    source_dir = chezmoi_mgr.get_source_dir()
+                    if source_dir:
+                        console.print(
+                            f"[green]✓ Using existing chezmoi "
+                            f"repo at {source_dir}[/green]"
+                        )
+                        chezmoi_mgr.git_push()
+                    else:
+                        console.print("[yellow]⚠️  No chezmoi repo configured[/yellow]")
+                        console.print(
+                            "[dim]Run 'chezmoi init <repo>' manually "
+                            "or use --chezmoi-repo[/dim]"
+                        )
+            else:
+                console.print("[yellow]⚠️  Skipping chezmoi integration[/yellow]")
+        except Exception as e:
+            console.print(f"[yellow]⚠️  Chezmoi integration failed: {e}[/yellow]")
+            console.print("[dim]Continuing with package backup only[/dim]")
 
     # Phase 2: Storage selection
     if not storage_type and not server_url:
@@ -209,6 +259,17 @@ def backup(
     help="Merge .bashrc instead of replacing",
 )
 @click.option(
+    "--use-chezmoi",
+    is_flag=True,
+    default=False,
+    help="Restore dotfiles using chezmoi",
+)
+@click.option(
+    "--chezmoi-repo",
+    default=None,
+    help="GitHub repository for chezmoi dotfiles (e.g., user/dotfiles)",
+)
+@click.option(
     "--yes",
     "-y",
     is_flag=True,
@@ -222,12 +283,15 @@ def restore(
     skip_packages: bool,
     skip_bashrc: bool,
     merge_bashrc: bool,
+    use_chezmoi: bool,
+    chezmoi_repo: Optional[str],
     yes: bool,
 ):
     """
     Restore packages and configurations from a backup.
 
     BACKUP_ID is the Gist ID or backup identifier from your backup command.
+    Use --use-chezmoi with --chezmoi-repo to restore dotfiles via chezmoi.
     """
     print_banner()
 
@@ -265,6 +329,30 @@ def restore(
         skip_bashrc=skip_bashrc,
         merge_bashrc=merge_bashrc,
     )
+
+    # Phase 2: Chezmoi restore (optional)
+    if success and use_chezmoi and chezmoi_repo:
+        try:
+            from .chezmoi import ensure_chezmoi
+
+            console.print("\n[blue]📁 Restoring dotfiles with chezmoi...[/blue]")
+            chezmoi_mgr = ensure_chezmoi(auto_install=True)
+            if chezmoi_mgr:
+                if chezmoi_mgr.init_repo(chezmoi_repo):
+                    if dry_run:
+                        console.print("[dim]Dry run - would apply dotfiles[/dim]")
+                        chezmoi_mgr.apply(dry_run=True)
+                    else:
+                        chezmoi_mgr.apply(dry_run=False)
+                        console.print("[green]✓ Dotfiles restored successfully[/green]")
+            else:
+                console.print("[yellow]⚠️  Skipping chezmoi restore[/yellow]")
+        except Exception as e:
+            console.print(f"[yellow]⚠️  Chezmoi restore failed: {e}[/yellow]")
+            console.print(
+                "[dim]Package restore was successful, "
+                "but dotfiles may need manual setup[/dim]"
+            )
 
     sys.exit(0 if success else 1)
 
