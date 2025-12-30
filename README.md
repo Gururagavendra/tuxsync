@@ -18,7 +18,11 @@ Backup and restore your packages and configurations across Linux machines - like
 
 ```bash
 # Backup your files from your old machine
+#basuc backup (apps+packages+bashrc)
 tuxsync backup
+
+#full backup (apps+packages+dotfiles+secrets(encrypted))
+tuxsync backup --use-chezmoi --chezmoi-repo username/dotfiles
 
 # Restore on new machine
 pip install tuxsync
