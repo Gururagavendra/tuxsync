@@ -25,16 +25,6 @@ Your server should implement these endpoints:
 **Response:**
 ```json
 {
-  "metadata": "version: \"1.0\"\ncreated_at: \"2024-12-28T10:30:00Z\"\ndistro: \"Ubuntu\"\ndistro_version: \"24.04\"\npackage_manager: \"apt\"\npackage_count: 142\npackages:\n  - vim\n  - git\n  - docker.io\nhas_bashrc: true",
-  "bashrc": "# .bashrc content..."
-}
-```
-
-**Note:** The `metadata` field contains YAML-formatted string (matching tuxsync.yaml structure).
-
-**Response:**
-```json
-{
   "backup_id": "unique-id"
 }
 ```
@@ -59,7 +49,7 @@ Your server should implement these endpoints:
 
 **Status Code:** 200 OK
 
-**Error Response:****
+**Error Response:**
 ```json
 {
   "error": "Backup not found"
