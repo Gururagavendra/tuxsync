@@ -44,7 +44,8 @@
                 │                             │
                 │  • Fetch profile            │
                 │  • Delegate to tuxmate-cli  │
-                │  • Restore bashrc/configs   │
+                │  • Delegate to chezmoi      │
+                │  • Restore configs          │
                 │  • Dry-run mode             │
                 └──────────────┬──────────────┘
                                ↓
@@ -56,10 +57,20 @@
                   │  Uses tuxmate's DB     │
                   └────────────┬───────────┘
                                ↓
+                  ┌────────────────────────┐
+                  │  chezmoi (optional)    │
+                  │  (external executor)   │
+                  │                        │
+                  │  Dotfile management    │
+                  │  Template support      │
+                  └────────────┬───────────┘
+                               ↓
                        📦 Restored System
 
 Note: tuxmate-cli uses the curated package database from
       tuxmate (https://github.com/abusoww/tuxmate)
+      chezmoi provides comprehensive dotfile management
+      (https://github.com/twpayne/chezmoi)
 ```
 
 ## Data Flow
@@ -68,31 +79,36 @@ Note: tuxmate-cli uses the curated package database from
 
 ```
 User → tuxsync backup → Scanner → Storage → GitHub Gist
-                           ↓
-                    Package List + Configs
+                           ↓              ↓
+                    Package List    Chezmoi (optional)
+                    + Configs       Dotfiles → Git Repo
 ```
 
 1. **Scanner** queries package manager (apt/dnf/pacman)
 2. Filters system packages (libraries, dependencies)
 3. Collects bashrc and config files
-4. **Storage** saves to GitHub Gist with metadata
+4. **Optionally** delegates dotfile backup to chezmoi
+5. **Storage** saves to GitHub Gist with metadata
 
 ### Restore Flow
 
 ```
 User → tuxsync restore <GIST_ID> → Storage → Restore Manager → tuxmate-cli → System
-                                       ↓
-                               Profile Data (YAML)
+                                       ↓                ↓
+                               Profile Data       chezmoi (optional)
+                               (YAML)             Dotfiles restore
 ```
 
 1. **Storage** fetches profile from GitHub Gist
 2. **Restore Manager** parses package list
 3. Calls `tuxmate-cli install <packages>` via subprocess
-4. Restores bashrc and configs to home directory
+4. **Optionally** calls `chezmoi init` and `chezmoi apply` for dotfiles
+5. Restores bashrc and configs to home directory
 
 ## Key Components
 
 - **Scanner**: Distro-agnostic package detection
+- **Chezmoi Integration**: Optional dotfile management delegation
 - **Storage**: Pluggable backend (GitHub Gists, custom server)
 - **Restore Manager**: Orchestrates restoration workflow
 - **Utils**: Helper functions (distro detection, subprocess execution)
@@ -157,14 +173,16 @@ This script:
 ### Loose Coupling
 
 TuxSync follows a **separation of concerns** principle:
-
-- **TuxSync** = The Brain (orchestrates backup/restore workflow)
-- **tuxmate-cli** = The Hands (handles cross-distro package installation using [tuxmate's](https://github.com/abusoww/tuxmate) curated package database)
+Orchestrator (coordinates backup/restore workflow)
+- **tuxmate-cli** = Package Manager (handles cross-distro package installation using [tuxmate's](https://github.com/abusoww/tuxmate) curated package database)
+- **chezmoi** = Dotfile Manager (optional, handles comprehensive dotfile syncing)
 
 This design means:
-- TuxSync calls `tuxmate-cli` as a subprocess (no code sharing)
-- If tuxmate-cli isn't installed, TuxSync auto-downloads it gracefully
-- Updates to either tool don't break the other
+- TuxSync calls external tools as subprocesses (no code sharing)
+- If tools aren't installed, TuxSync auto-downloads them gracefully
+- Updates to any tool don't break the others
+- Users can use tuxmate-cli or chezmoi independently
+- Swapping dotfile managers (chezmoi → yadm) is trivial
 - Users can use tuxmate-cli independently for package installation
 
 ### Why This Architecture?

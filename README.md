@@ -102,9 +102,10 @@ uv sync
 TuxSync creates a backup containing your package list and bashrc, stored as a private GitHub Gist. The restore process fetches this backup and uses [tuxmate-cli](https://github.com/Gururagavendra/tuxmate-cli) to install packages across different Linux distributions.
 
 **Architecture:**
-- **TuxSync** - The Brain (orchestrates backup/restore workflow)
-- **tuxmate-cli** - The Hands (handles cross-distro package installation using [tuxmate's](https://github.com/abusoww/tuxmate) curated package database)
-- **Loose coupling** - Both tools work independently
+- **TuxSync** - The Orchestrator (coordinates backup/restore workflow)
+- **tuxmate-cli** - Package Manager (handles cross-distro package installation using [tuxmate's](https://github.com/abusoww/tuxmate) curated package database)
+- **chezmoi** - Dotfile Manager (optional integration for comprehensive dotfile syncing)
+- **Loose coupling** - All tools work independently, TuxSync orchestrates them
 
 For detailed architecture and technical specifications, see [ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
@@ -122,7 +123,7 @@ For detailed architecture and technical specifications, see [ARCHITECTURE.md](do
 
 ### Later
 
-- [ ] Config file syncing (dotfiles) - Basically syncing all your dotfiles, not just bashrc
+- [ ] Config file syncing (dotfiles) - Integration with [chezmoi](https://github.com/twpayne/chezmoi) for comprehensive dotfile management
 - [ ] Incremental backups - Only backup changes since last backup
 - [ ] Profile versioning - Keep multiple versions/snapshots with timestamps
 
